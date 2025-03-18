@@ -1,0 +1,127 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<article class="post-detail">
+  <h1 class="post-title">{{post.title}}</h1>
+  
+  <div class="post-meta">
+    <span class="post-date">
+      <i class="fa fa-calendar"></i> {{post.created_at}}
+    </span>
+    <span class="post-category">
+      <i class="fa fa-folder"></i> 
+      <a href="/category/{{post.category_id}}">{{post.category_name}}</a>
+    </span>
+    {{if post.tags && post.tags.length > 0}}
+    <span class="post-tags">
+      <i class="fa fa-tags"></i>
+      {{each post.tags}}
+      <a href="/tag/{{$value.name}}" class="tag">{{$value.name}}</a>
+      {{/each}}
+    </span>
+    {{/if}}
+    <span class="post-views">
+      <i class="fa fa-eye"></i> {{post.views}} 次阅读
+    </span>
+  </div>
+
+  <div class="post-content example">
+    {{@ post.htmlContent}}
+  </div>
+  
+  <!-- 文章页脚信息 -->
+  <div class="post-footer">
+    <div class="post-share">
+      <span>分享到：</span>
+      <a href="https://www.weibo.com/share?url={{siteSettings.site_url}}{{post.articleUrl}}&title={{post.title}}" target="_blank" title="分享到微博">
+        <i class="fa fa-weibo"></i>
+      </a>
+      <a href="https://twitter.com/intent/tweet?url={{siteSettings.site_url}}{{post.articleUrl}}&text={{post.title}}" target="_blank" title="分享到Twitter">
+        <i class="fa fa-twitter"></i>
+      </a>
+    </div>
+  </div>
+  </article>
+
+<style>
+  /* 文章内容样式增强 */
+  .post-content {
+    line-height: 1.8;
+    margin: 2rem 0;
+  }
+  
+  .post-content h1, .post-content h2, .post-content h3, 
+  .post-content h4, .post-content h5, .post-content h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .post-content p {
+    margin-bottom: 1em;
+  }
+  
+  .post-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1.5em auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .post-content pre {
+    background-color: #f8f8f8;
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  
+  .post-content code {
+    background-color: #f0f0f0;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  
+  .post-content blockquote {
+    border-left: 4px solid #ddd;
+    padding-left: 1em;
+    margin-left: 0;
+    color: #666;
+  }
+  
+  .post-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+  }
+  
+  .post-content table th, .post-content table td {
+    border: 1px solid #ddd;
+    padding: 0.5em;
+  }
+  
+  .post-content table th {
+    background-color: #f5f5f5;
+  }
+  
+  /* 文章页脚样式 */
+  .post-footer {
+    margin-top: 2em;
+    padding-top: 1em;
+    border-top: 1px solid #eee;
+  }
+  
+  .post-share {
+    display: flex;
+    align-items: center;
+  }
+  
+  .post-share a {
+    margin: 0 0.5em;
+    font-size: 1.2em;
+  }
+</style>
+{{/block}} 

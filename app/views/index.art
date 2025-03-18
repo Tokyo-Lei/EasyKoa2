@@ -1,0 +1,55 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+
+
+<h1 class="ui header">最新文章</h1>
+
+{{if posts && posts.length > 0}}
+  {{each posts}}
+  <article>
+    <h2><a href="{{$value.articleUrl}}">{{$value.title}}</a></h2>
+    <p>{{$value.excerpt}}</p>
+    <span>
+      <a href="#"><i class="fa fa-calendar"></i> {{$value.created_at}}</a>
+      {{if $value.category_name}}
+      <a href="/category/{{$value.category_id}}"><i class="fa fa-flask"></i> {{$value.category_name}}</a>
+      {{/if}}
+      {{each $value.tags}}
+      <a href="/tag/{{$value.name}}"><i class="fa fa-tag"></i> {{$value.name}}</a>
+      {{/each}}
+    </span>
+  </article>
+  {{/each}}
+  
+  {{if pagination && pagination.total > 1}}
+  <div class="pagination-container">
+    <div class="ui pagination menu">
+      {{if pagination.current > 1}}
+      <a href="/?page={{pagination.current - 1}}" class="item">
+        <i class="angle left icon"></i> 上一页
+      </a>
+      {{/if}}
+      
+      <!-- 页码按钮 -->
+      {{each pagination.pageNumbers}}
+      <a href="/?page={{$value}}" class="item {{$value === pagination.current ? 'active' : ''}}">
+        {{$value}}
+      </a>
+      {{/each}}
+      
+      {{if pagination.current < pagination.total}}
+      <a href="/?page={{pagination.current + 1}}" class="item">
+        下一页 <i class="angle right icon"></i>
+      </a>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+{{else}}
+  <div class="ui message">
+    <div class="header">暂无文章</div>
+    <p>还没有发布任何文章，请先在后台添加内容。</p>
+  </div>
+{{/if}}
+{{/block}}

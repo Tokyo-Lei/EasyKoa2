@@ -1,0 +1,125 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="row">
+  <div class="col-12">
+    <h1 class="mb-4">控制面板</h1>
+  </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row">
+  <div class="col-4">
+    <div class="card bg-light mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center">
+          <div class="me-3 bg-primary text-white rounded p-3">
+            <i class="mdi mdi-file-document" style="font-size: 24px;"></i>
+          </div>
+          <div>
+            <h3 class="mb-1">{{stats.postCount}}</h3>
+            <p class="mb-0 text-muted">文章</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-4">
+    <div class="card bg-light mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center">
+          <div class="me-3 bg-success text-white rounded p-3">
+            <i class="mdi mdi-folder" style="font-size: 24px;"></i>
+          </div>
+          <div>
+            <h3 class="mb-1">{{stats.categoryCount}}</h3>
+            <p class="mb-0 text-muted">分类</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-4">
+    <div class="card bg-light mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center">
+          <div class="me-3 bg-warning text-white rounded p-3">
+            <i class="mdi mdi-tag-multiple" style="font-size: 24px;"></i>
+          </div>
+          <div>
+            <h3 class="mb-1">{{stats.tagCount}}</h3>
+            <p class="mb-0 text-muted">标签</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 最近文章 -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">
+          <i class="mdi mdi-file-document"></i> 最近发布的文章
+        </h3>
+        
+        <div>
+          <a href="/admin/posts/new" class="btn btn-primary btn-sm">
+            <i class="mdi mdi-plus"></i> 写文章
+          </a>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        {{if recentPosts && recentPosts.length > 0}}
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>分类</th>
+                <th>发布时间</th>
+                <th>阅读数</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{each recentPosts}}
+              <tr>
+                <td>
+                  <a href="/post/{{$value.id}}" target="_blank" class="text-primary">{{$value.title}}</a>
+                </td>
+                <td>{{$value.category_name || '未分类'}}</td>
+                <td>{{$value.created_at}}</td>
+                <td>{{$value.views}}</td>
+                <td>
+                  <a href="/admin/posts/edit/{{$value.id}}" class="btn btn-primary btn-sm">
+                    <i class="mdi mdi-pencil"></i> 编辑
+                  </a>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="text-end mt-4">
+          <a href="/admin/posts" class="btn btn-secondary">
+            <i class="mdi mdi-format-list-bulleted"></i> 查看全部文章
+          </a>
+        </div>
+        {{else}}
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="mdi mdi-information-outline me-2" style="font-size: 20px;"></i>
+          <p class="mb-0">还没有发布任何文章。</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}} 

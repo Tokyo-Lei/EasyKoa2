@@ -1,0 +1,807 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">
+          <i class="mdi mdi-pencil"></i> {{post ? '编辑文章' : '新建文章'}}
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        <form class="ui form" id="postForm">
+          {{if post}}
+          <input type="hidden" name="id" value="{{post.id}}">
+          {{/if}}
+          <div class="row">
+            <div class="col-8">
+              <div class="mb-3">
+                <label class="form-label">标题</label>
+                <input type="text" class="form-control" name="title" placeholder="文章标题" value="{{post ? post.title : ''}}">
+              </div>
+            </div>
+            
+            <div class="col-4">
+              <div class="mb-3">
+                <label class="form-label">分类</label>
+                <select class="form-select" name="categoryId">
+                  <option value="">选择分类</option>
+                  {{each categoryTree}}
+                  <option value="{{$value.id}}" {{post && post.category_id == $value.id ? 'selected' : ''}}>{{$value.name}}</option>
+                  {{if $value.children && $value.children.length > 0}}
+                    {{each $value.children}}
+                    <option value="{{$value.id}}" {{post && post.category_id == $value.id ? 'selected' : ''}}>-- {{$value.name}}</option>
+                    {{/each}}
+                  {{/if}}
+                  {{/each}}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">标签</label>
+            <select class="form-control" id="tagSelect" name="tags" multiple="multiple">
+              <!-- 此处将通过JavaScript填充标签选项 -->
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">内容 (支持Markdown格式)</label>
+            <div class="editor-toolbar-custom">
+              <button type="button" id="uploadSingleImage" class="btn btn-light btn-sm" title="上传单张图片">
+                <i class="mdi mdi-image"></i> 插入图片
+              </button>
+              <button type="button" id="uploadMultipleImages" class="btn btn-light btn-sm" title="上传多张图片">
+                <i class="mdi mdi-image-multiple"></i> 批量上传
+              </button>
+              <button type="button" id="browseResources" class="btn btn-light btn-sm" title="浏览已上传的资源">
+                <i class="mdi mdi-folder-multiple-image"></i> 浏览资源
+              </button>
+            </div>
+            <textarea name="content" id="editor" rows="20">{{post ? post.content : ''}}</textarea>
+          </div>
+          
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="isPublished" name="isPublished" value="true" {{post && post.is_published ? 'checked' : ''}}>
+            <label class="form-check-label" for="isPublished">立即发布</label>
+          </div>
+          
+          <div class="alert alert-danger" style="display: none;"></div>
+          
+          <div class="d-flex align-items-center gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">
+              <i class="mdi mdi-content-save me-1"></i> 保存
+            </button>
+            <a href="/admin/posts" class="btn btn-light">
+              <i class="mdi mdi-arrow-left me-1"></i> 取消
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 单图上传模态框 -->
+<div class="modal fade" id="singleImageUploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">插入图片</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">选择图片</label>
+          <input type="file" class="form-control" id="singleImageInput" accept="image/*">
+        </div>
+        
+        <div id="singleImagePreview" style="display: none; margin-top: 15px;">
+          <div class="text-center mb-2">图片预览</div>
+          <div class="p-2 border rounded d-flex align-items-center justify-content-center" style="height: 200px;">
+            <img src="" style="max-width: 100%; max-height: 100%;">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="insertSingleImage">插入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 多图上传模态框 -->
+<div class="modal fade" id="multipleImagesUploadModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">批量上传图片</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">选择多张图片</label>
+          <input type="file" class="form-control" id="multipleImagesInput" accept="image/*" multiple>
+        </div>
+        
+        <div id="multipleImagesPreview" style="display: none; margin-top: 15px;">
+          <div class="text-center mb-2">图片预览</div>
+          <div class="images-preview-container" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="insertMultipleImages">批量插入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 资源浏览模态框 -->
+<div class="modal fade" id="resourcesBrowseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">浏览资源</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="resourcesGrid" class="resources-grid">
+          <!-- 这里将通过AJAX加载资源列表 -->
+          <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="mt-2">加载中...</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'scripts'}}
+<script src="https://cdn.bootcdn.net/ajax/libs/simplemde/1.11.2/simplemde.min.js"></script>
+<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/simplemde/1.11.2/simplemde.min.css">
+<!-- 添加Select2用于标签选择 -->
+<link href="https://cdn.bootcdn.net/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.bootcdn.net/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+
+<style>
+.editor-toolbar-custom {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.CodeMirror {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* 修复编辑器全屏模式的问题 */
+.CodeMirror-fullscreen, .editor-toolbar.fullscreen, .editor-preview-side.editor-preview-active-side {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+.editor-toolbar.fullscreen {
+  padding: 10px !important;
+}
+
+.editor-preview-side.editor-preview-active-side {
+  top: 50px !important;
+}
+
+/* 标签选择器样式增强 */
+.select2-container--default .select2-selection--multiple {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  min-height: 38px;
+  background-color: #fff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  outline: 0;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: #5f76e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  margin: 3px 5px 3px 0;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  width: auto !important; /* 强制宽度自适应内容 */
+  max-width: none !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+  padding-left: 0;
+  padding-right: 0;
+  white-space: nowrap;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 5px;
+  border: none;
+  background: none;
+  padding: 0 2px;
+  border-radius: 50%;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  float: none;
+  position: static;
+  order: -1;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background-color: #5f76e8;
+  color: white;
+}
+
+.select2-container--default .select2-search--inline .select2-search__field {
+  margin-top: 3px;
+  font-size: 0.9rem;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  padding: 0 5px;
+}
+
+.select2-dropdown {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  z-index: 9999;
+}
+
+.select2-container {
+  width: 100% !important;
+}
+
+/* 标签输入框样式优化 */
+.select2-container .select2-search--inline {
+  float: left;
+  margin-top: 3px;
+}
+
+.select2-container .select2-search--inline .select2-search__field {
+  margin-top: 0;
+  padding-left: 5px;
+  width: auto !important;
+  min-width: 150px;
+}
+
+.select2-container--default .select2-results__option {
+  padding: 0.5rem 0.75rem;
+  transition: background-color 0.15s ease;
+}
+
+.select2-results__message {
+  padding: 0.5rem 0.75rem;
+  color: #6c757d;
+}
+
+.select2-container--default .select2-selection--multiple::placeholder {
+  color: #6c757d;
+  opacity: 1;
+}
+
+/* 创建标签时的样式 */
+.select2-container--default .select2-results__option--highlighted[data-select2-tag="true"] {
+  background-color: #f0f4ff;
+  color: #5f76e8;
+  font-weight: 500;
+}
+
+.select2-container--default .select2-results__option[data-select2-tag="true"]::before {
+  content: "新标签: ";
+  opacity: 0.7;
+}
+
+/* 自定义标签选择器样式 */
+.tag-selection .select2-selection__choice {
+  float: left !important;
+  clear: none !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__clear {
+  margin-top: 5px;
+  margin-right: 10px;
+  background-color: #f8f9fa;
+  border-radius: 3px;
+  padding: 0 5px;
+  color: #6c757d;
+  font-size: 0.875rem;
+  border: 1px solid #dee2e6;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__clear:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.images-preview-container img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  padding: 3px;
+}
+
+.resource-item {
+  width: 120px;
+  height: 120px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.resource-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resource-item:hover::after {
+  content: '点击插入';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+}
+</style>
+
+<script>
+  $(document).ready(function() {
+    // 初始化分类下拉菜单
+    $('.ui.dropdown').dropdown();
+    
+    // 初始化Markdown编辑器
+    const simplemde = new SimpleMDE({
+      element: document.getElementById('editor'),
+      spellChecker: false,
+      autosave: {
+        enabled: true,
+        uniqueId: 'blog-post-{{post ? post.id : "new"}}',
+        delay: 1000,
+      },
+      toolbar: [
+        'bold', 'italic', 'heading', '|', 
+        'quote', 'unordered-list', 'ordered-list', '|',
+        'link', 'table', 'horizontal-rule', '|',
+        'preview', 'side-by-side', 'fullscreen', '|',
+        'guide'
+      ]
+    });
+    
+    // 准备标签数据
+    let existingTags = [];
+    {{if post && post.tags && post.tags.length > 0}}
+    existingTags = [{{each post.tags}}'{{$value.name}}',{{/each}}];
+    {{/if}}
+    
+    // 准备标签数据
+    const tagOptions = [];
+    {{each allTags}}
+    tagOptions.push({id: '{{$value.name}}', text: '{{$value.name}}'});
+    {{/each}}
+    
+    // 初始化Select2，更好的配置
+    $('#tagSelect').select2({
+      placeholder: '添加或选择标签...',
+      tags: true,
+      data: tagOptions,
+      tokenSeparators: [',', ' '],
+      allowClear: true,
+      width: '100%',
+      selectionCssClass: 'tag-selection',
+      dropdownCssClass: 'tag-dropdown',
+      templateResult: formatTagOption,
+      templateSelection: formatTagSelection,
+      language: {
+        noResults: function() {
+          return "没有找到标签，输入创建新标签";
+        },
+        inputTooShort: function() {
+          return "请输入标签名称";
+        },
+        searching: function() {
+          return "搜索中...";
+        },
+        removeAllItems: function() {
+          return "清除所有标签";
+        }
+      }
+    });
+    
+    // 设置已有标签
+    if (existingTags.length > 0) {
+      $('#tagSelect').val(existingTags).trigger('change');
+    }
+    
+    // 格式化标签选项
+    function formatTagOption(tag) {
+      if (!tag.id) {
+        return tag.text;
+      }
+      
+      // 检查是否是新创建的标签
+      let isNew = true;
+      for(let i = 0; i < tagOptions.length; i++) {
+        if(tagOptions[i].id === tag.id) {
+          isNew = false;
+          break;
+        }
+      }
+      
+      if(isNew) {
+        return $('<span><i class="mdi mdi-plus-circle me-1"></i>' + tag.text + ' (新标签)</span>');
+      } else {
+        return $('<span><i class="mdi mdi-tag me-1"></i>' + tag.text + '</span>');
+      }
+    }
+    
+    // 格式化已选标签
+    function formatTagSelection(tag) {
+      return tag.text;
+    }
+    
+    // 单图上传
+    $('#uploadSingleImage').on('click', function() {
+      const singleImageModal = new bootstrap.Modal(document.getElementById('singleImageUploadModal'));
+      singleImageModal.show();
+    });
+    
+    $('#singleImageInput').on('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          $('#singleImagePreview').show();
+          $('#singleImagePreview img').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    $('#insertSingleImage').on('click', function() {
+      const fileInput = document.getElementById('singleImageInput');
+      if (fileInput.files.length === 0) return;
+      
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('images', file);
+      
+      const $btn = $(this);
+      
+      $.ajax({
+        url: '/admin/resources/upload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        beforeSend: function() {
+          $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 上传中...');
+        },
+        success: function(response) {
+          if (response.success && response.resources && response.resources.length > 0) {
+            const imageUrl = response.resources[0].url;
+            const imageMd = `![${file.name}](${imageUrl})`;
+            
+            // 插入到编辑器光标位置
+            const cm = simplemde.codemirror;
+            const pos = cm.getCursor();
+            cm.replaceRange(imageMd, pos);
+            
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('singleImageUploadModal')).hide();
+            $('#singleImageInput').val('');
+            $('#singleImagePreview').hide();
+          } else {
+            alert('上传失败：' + (response.error || '未知错误'));
+          }
+        },
+        error: function() {
+          alert('上传请求失败，请重试');
+        },
+        complete: function() {
+          $btn.prop('disabled', false).html('插入');
+        }
+      });
+    });
+    
+    // 多图上传
+    $('#uploadMultipleImages').on('click', function() {
+      const multipleImagesModal = new bootstrap.Modal(document.getElementById('multipleImagesUploadModal'));
+      multipleImagesModal.show();
+    });
+    
+    $('#multipleImagesInput').on('change', function() {
+      const files = this.files;
+      if (files.length > 0) {
+        const previewContainer = $('.images-preview-container');
+        previewContainer.empty();
+        
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.title = file.name;
+            previewContainer.append(img);
+          }
+          
+          reader.readAsDataURL(file);
+        }
+        
+        $('#multipleImagesPreview').show();
+      }
+    });
+    
+    $('#insertMultipleImages').on('click', function() {
+      const fileInput = document.getElementById('multipleImagesInput');
+      if (fileInput.files.length === 0) return;
+      
+      const formData = new FormData();
+      for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('images', fileInput.files[i]);
+      }
+      
+      const $btn = $(this);
+      
+      $.ajax({
+        url: '/admin/resources/upload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        beforeSend: function() {
+          $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 上传中...');
+        },
+        success: function(response) {
+          if (response.success && response.resources && response.resources.length > 0) {
+            let imagesMd = '';
+            
+            response.resources.forEach(resource => {
+              imagesMd += `![${resource.originalname}](${resource.url})\n\n`;
+            });
+            
+            // 插入到编辑器光标位置
+            const cm = simplemde.codemirror;
+            const pos = cm.getCursor();
+            cm.replaceRange(imagesMd, pos);
+            
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('multipleImagesUploadModal')).hide();
+            $('#multipleImagesInput').val('');
+            $('#multipleImagesPreview').hide();
+            $('.images-preview-container').empty();
+          } else {
+            alert('上传失败：' + (response.error || '未知错误'));
+          }
+        },
+        error: function() {
+          alert('上传请求失败，请重试');
+        },
+        complete: function() {
+          $btn.prop('disabled', false).html('批量插入');
+        }
+      });
+    });
+    
+    // 资源浏览
+    $('#browseResources').on('click', function() {
+      const resourcesBrowseModal = new bootstrap.Modal(document.getElementById('resourcesBrowseModal'));
+      resourcesBrowseModal.show();
+      
+      // 加载资源列表
+      $.ajax({
+        url: '/admin/resources/list',
+        type: 'GET',
+        success: function(response) {
+          if (response.success && response.resources) {
+            const resourcesGrid = $('#resourcesGrid');
+            resourcesGrid.empty();
+            
+            if (response.resources.length > 0) {
+              response.resources.forEach(resource => {
+                const resourceItem = document.createElement('div');
+                resourceItem.className = 'resource-item';
+                resourceItem.dataset.url = resource.url;
+                resourceItem.dataset.name = resource.originalname;
+                
+                const img = document.createElement('img');
+                img.src = resource.url;
+                img.alt = resource.originalname;
+                
+                resourceItem.appendChild(img);
+                resourcesGrid.append(resourceItem);
+              });
+            } else {
+              resourcesGrid.html('<div class="alert alert-info" style="grid-column: 1 / -1;">暂无资源，请先上传图片</div>');
+            }
+          } else {
+            $('#resourcesGrid').html('<div class="alert alert-danger" style="grid-column: 1 / -1;">加载资源失败</div>');
+          }
+        },
+        error: function() {
+          $('#resourcesGrid').html('<div class="alert alert-danger" style="grid-column: 1 / -1;">请求失败，请重试</div>');
+        }
+      });
+    });
+    
+    // 点击资源项插入到编辑器
+    $(document).on('click', '.resource-item', function() {
+      const url = $(this).data('url');
+      const name = $(this).data('name');
+      
+      const imageMd = `![${name}](${url})`;
+      
+      // 插入到编辑器光标位置
+      const cm = simplemde.codemirror;
+      const pos = cm.getCursor();
+      cm.replaceRange(imageMd, pos);
+      
+      // 关闭模态框
+      bootstrap.Modal.getInstance(document.getElementById('resourcesBrowseModal')).hide();
+    });
+    
+    // 表单验证
+    $('#postForm').submit(function(event) {
+      event.preventDefault();
+      
+      // 基本验证
+      const title = $('input[name="title"]').val().trim();
+      const content = simplemde.value().trim();
+      const categoryId = $('select[name="categoryId"]').val();
+      const isPublished = $('#isPublished').is(':checked');
+      
+      console.log('表单验证:', {
+        title: title,
+        content: content ? content.substring(0, 50) + '...' : null,
+        categoryId: categoryId,
+        categoryIdType: typeof categoryId,
+        isPublished: isPublished
+      });
+      
+      if (!title) {
+        $('.alert-danger').html('请输入文章标题').show();
+        return false;
+      }
+      
+      if (!content) {
+        $('.alert-danger').html('请输入文章内容').show();
+        return false;
+      }
+      
+      // 发布状态下分类必选
+      // 多重检查，确保空字符串、null和undefined都被捕获
+      if (isPublished && (categoryId === undefined || categoryId === null || categoryId === '' || categoryId === '0')) {
+        $('.alert-danger').html('发布文章必须选择分类').show();
+        // 滚动到表单顶部，确保用户看到错误提示
+        $('html, body').animate({
+          scrollTop: $('.alert-danger').offset().top - 100
+        }, 300);
+        
+        // 高亮分类选择框
+        $('select[name="categoryId"]').addClass('is-invalid').focus();
+        
+        console.error('表单验证失败: 发布状态但未选择分类', {categoryId, isPublished});
+        return false;
+      }
+      
+      // 移除任何高亮错误
+      $('select[name="categoryId"]').removeClass('is-invalid');
+      
+      // 确保categoryId在发送前为整数
+      let categoryIdValue = null;
+      if (categoryId && categoryId !== '') {
+        categoryIdValue = parseInt(categoryId);
+        if (isNaN(categoryIdValue)) {
+          console.error('分类ID无效', categoryId);
+          $('.alert-danger').html('分类ID无效').show();
+          return false;
+        }
+      }
+      
+      // 获取表单数据
+      const formData = {
+        title: title,
+        content: content,
+        categoryId: categoryIdValue, // 使用解析后的整数
+        tags: $('#tagSelect').val() || [],
+        isPublished: isPublished
+      };
+      
+      // 如果是编辑现有文章，添加文章ID
+      {{if post}}
+      formData.id = {{post.id}};
+      {{/if}}
+      
+      console.log('提交的表单数据:', formData);
+      
+      // 发送请求
+      $.ajax({
+        url: '{{post ? "/admin/posts/save/" + post.id : "/admin/posts/save"}}',
+        type: 'POST',
+        data: formData,
+        beforeSend: function() {
+          $('button[type="submit"]').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 保存中...');
+          $('.alert-danger').hide();
+        },
+        success: function(response) {
+          if (response.success) {
+            // 显示成功消息
+            $('<div class="alert alert-success">保存成功！正在返回文章列表...</div>')
+              .insertBefore('#postForm')
+              .hide()
+              .fadeIn();
+            
+            // 延迟跳转，让用户看到成功消息
+            setTimeout(function() {
+              window.location.href = '/admin/posts';
+            }, 1500);
+          } else {
+            $('.alert-danger').html(response.error || '保存失败').show();
+          }
+        },
+        error: function(xhr) {
+          $('.alert-danger').html('保存失败：' + (xhr.responseJSON?.error || '服务器错误')).show();
+        },
+        complete: function() {
+          $('button[type="submit"]').prop('disabled', false).html('<i class="mdi mdi-content-save me-1"></i> 保存');
+        }
+      });
+    });
+  });
+</script>
+{{/block}} 

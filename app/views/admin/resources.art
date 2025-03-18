@@ -1,0 +1,709 @@
+{{extend './layout.art'}}
+
+{{block 'breadcrumb'}}
+<div class="page-breadcrumb">
+  <div class="row">
+    <div class="col-5 align-self-center">
+      <h4 class="page-title">资源管理</h4>
+    </div>
+    <div class="col-7 align-self-center">
+      <div class="d-flex align-items-center justify-content-end">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="/admin">首页</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">资源管理</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'content'}}
+<div class="row">
+  <div class="col-lg-8 col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-4">
+          <h4 class="card-title mb-0">
+            <i class="mdi mdi-image-album"></i> 图片资源
+          </h4>
+          <span class="ms-auto text-muted">共 {{resources ? resources.length : 0}} 个资源</span>
+        </div>
+        
+        <div id="resources-container">
+          {{if resources && resources.length > 0}}
+          <div class="row resources-grid">
+            {{each resources}}
+            <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6 mb-4">
+              <div class="card resource-item h-100" data-id="{{$value.id}}" data-path="{{$value.path}}">
+                <div class="resource-preview">
+                  <img src="{{$value.url}}" alt="{{$value.originalname}}" class="card-img-top">
+                </div>
+                <div class="card-body p-3">
+                  <div class="resource-name text-truncate fw-medium" title="{{$value.originalname}}">{{$value.originalname}}</div>
+                  <div class="text-muted small">{{$value.size_formatted}} · {{$value.created_at.split(' ')[0]}}</div>
+                  <div class="mt-2 d-flex justify-content-between">
+                    <button class="btn btn-sm btn-outline-info copy-resource-url" data-url="{{$value.url}}" title="复制URL">
+                      <i class="mdi mdi-content-copy"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary replace-resource" data-id="{{$value.id}}" title="替换图片">
+                      <i class="mdi mdi-sync"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-resource" data-id="{{$value.id}}" title="删除">
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          
+          {{if pagination && pagination.total > 1}}
+          <div class="d-flex justify-content-center mt-4">
+            <ul class="pagination">
+              {{if pagination.current > 1}}
+              <li class="page-item">
+                <a class="page-link" href="/admin/resources?page={{pagination.current - 1}}">
+                  <i class="mdi mdi-chevron-left"></i> 上一页
+                </a>
+              </li>
+              {{/if}}
+              
+              {{if pagination.current < pagination.total}}
+              <li class="page-item">
+                <a class="page-link" href="/admin/resources?page={{pagination.current + 1}}">
+                  下一页 <i class="mdi mdi-chevron-right"></i>
+                </a>
+              </li>
+              {{/if}}
+            </ul>
+          </div>
+          {{/if}}
+          {{else}}
+          <div class="alert alert-info d-flex align-items-center">
+            <i class="mdi mdi-information-outline me-2" style="font-size: 20px;"></i> 
+            <span>暂无上传的资源，请先上传图片。</span>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4 col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title mb-4">
+          <i class="mdi mdi-cloud-upload-outline"></i> 上传资源
+        </h4>
+        
+        <form id="uploadForm">
+          <div class="upload-area" id="dropArea">
+            <input type="file" id="fileInput" name="images" multiple accept="{{uploadSettings.allowedTypes.join(',')}}" style="display: none;">
+            <div class="upload-icon">
+              <i class="mdi mdi-cloud-upload-outline"></i>
+            </div>
+            <div class="upload-text">
+              拖拽文件到此处或
+              <button type="button" class="btn btn-sm btn-primary" id="browseButton">选择文件</button>
+            </div>
+            <div class="upload-hint small text-muted">支持{{uploadSettings.allowedTypeLabels}}等图片格式，单张不超过{{uploadSettings.maxFileSize}}MB</div>
+          </div>
+          
+          <div id="previewContainer" class="mt-4" style="display: none;">
+            <h5 class="mb-3">上传预览</h5>
+            <div id="previewList" class="mb-3" style="max-height: 250px; overflow-y: auto;"></div>
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-primary" id="submitUpload">开始上传</button>
+              <button type="button" class="btn btn-light" id="cancelUpload">取消</button>
+            </div>
+          </div>
+        </form>
+        
+        <div class="mt-4">
+          <h5 class="mb-3">使用说明</h5>
+          <div class="bg-light p-3 rounded">
+            <ul class="ps-3 mb-0">
+              <li>上传成功后可复制图片URL</li>
+              <li>支持拖放多张图片同时上传</li>
+              <li>单张图片大小不超过5MB</li>
+              <li>点击替换按钮可更新图片内容</li>
+              <li>替换保持原有URL不变</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 确认删除的模态框 -->
+<div class="modal fade" id="deleteResourceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">删除资源</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex">
+          <i class="mdi mdi-alert text-warning me-2" style="font-size: 24px;"></i>
+          <p class="mb-0">确定要删除这个资源吗？此操作不可撤销，若资源正在被使用可能导致显示异常。</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteResource">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 替换资源的模态框 -->
+<div class="modal fade" id="replaceResourceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">替换图片</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info d-flex">
+          <i class="mdi mdi-information-outline me-2" style="font-size: 20px;"></i>
+          <div>替换图片将保持原有URL不变，只更新图片内容。</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">选择新图片</label>
+          <input type="file" class="form-control" id="replaceFileInput" name="image" accept="image/*">
+        </div>
+        <div id="replacePreview" style="display: none;">
+          <div class="row">
+            <div class="col-6">
+              <div class="text-center mb-2">原图</div>
+              <div class="border p-2 d-flex align-items-center justify-content-center" style="height: 150px;">
+                <img id="originalImage" src="" style="max-width: 100%; max-height: 100%;">
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center mb-2">新图</div>
+              <div class="border p-2 d-flex align-items-center justify-content-center" style="height: 150px;">
+                <img id="newImage" src="" style="max-width: 100%; max-height: 100%;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="confirmReplaceResource">替换</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'scripts'}}
+<style>
+.resource-item {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.resource-item:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.resource-preview {
+  height: 160px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f7f7;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.resource-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 25px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #f9f9f9;
+}
+
+.upload-area:hover, .upload-area.dragover {
+  border-color: #5f76e8;
+  background-color: rgba(95, 118, 232, 0.05);
+}
+
+.upload-icon {
+  font-size: 36px;
+  color: #5f76e8;
+  margin-bottom: 15px;
+}
+
+.upload-text {
+  margin-bottom: 10px;
+}
+
+.preview-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+.preview-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  margin-right: 10px;
+  border-radius: 4px;
+}
+
+.preview-item-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-item-remove {
+  color: #f62d51;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.preview-item-remove:hover {
+  background-color: rgba(246, 45, 81, 0.1);
+  border-radius: 50%;
+}
+</style>
+
+<script>
+  $(document).ready(function() {
+    // 获取DOM元素
+    const fileInput = document.getElementById('fileInput');
+    const dropArea = document.getElementById('dropArea');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewList = document.getElementById('previewList');
+    const browseButton = document.getElementById('browseButton');
+    
+    // 存储要上传的文件
+    let filesToUpload = [];
+    
+    // 工具函数：显示警告信息
+    function showAlert(type, message) {
+      // 先检查是否已经有警告框
+      let alertBox = $('.alert-box');
+      if (alertBox.length === 0) {
+        // 如果没有，创建一个新的
+        alertBox = $('<div class="alert-box mt-3 mb-3"></div>');
+        $('.card-body').first().prepend(alertBox);
+      }
+      
+      // 创建警告框
+      const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          <div>${message}</div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+      
+      // 添加到页面
+      alertBox.html(alertHtml);
+      
+      // 滚动到顶部
+      $('html, body').animate({
+        scrollTop: alertBox.offset().top - 100
+      }, 200);
+      
+      // 5秒后自动关闭
+      setTimeout(function() {
+        $('.alert').alert('close');
+      }, 5000);
+    }
+    
+    // 工具函数：清除文件选择
+    function clearFileSelection() {
+      previewList.innerHTML = '';
+      previewContainer.style.display = 'none';
+      filesToUpload = [];
+      fileInput.value = '';
+    }
+    
+    // 拖放上传
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+      dropArea.classList.add('dragover');
+    }
+    
+    function unhighlight() {
+      dropArea.classList.remove('dragover');
+    }
+    
+    // 处理拖放文件
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    }
+    
+    // 点击上传区域也触发文件选择
+    dropArea.addEventListener('click', function() {
+      fileInput.click();
+    });
+    
+    // 浏览文件
+    browseButton.addEventListener('click', function(e) {
+      e.stopPropagation(); // 防止事件冒泡触发dropArea的点击
+      fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function() {
+      handleFiles(this.files);
+    });
+    
+    // 处理文件
+    function handleFiles(files) {
+      if (files.length === 0) return;
+      
+      // 筛选图片文件
+      const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+      
+      if (imageFiles.length === 0) {
+        alert('请选择图片文件');
+        return;
+      }
+      
+      // 添加到待上传列表
+      imageFiles.forEach(file => {
+        if (!filesToUpload.some(f => f.name === file.name && f.size === file.size)) {
+          filesToUpload.push(file);
+        }
+      });
+      
+      // 预览
+      previewFiles();
+      previewContainer.style.display = 'block';
+    }
+    
+    // 预览文件
+    function previewFiles() {
+      previewList.innerHTML = '';
+      
+      filesToUpload.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        const preview = document.createElement('div');
+        preview.className = 'preview-item';
+        
+        const img = document.createElement('img');
+        preview.appendChild(img);
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'preview-item-name';
+        nameDiv.textContent = file.name;
+        preview.appendChild(nameDiv);
+        
+        const sizeDiv = document.createElement('div');
+        sizeDiv.className = 'ms-auto me-2 small text-muted';
+        sizeDiv.textContent = formatFileSize(file.size);
+        preview.appendChild(sizeDiv);
+        
+        const removeButton = document.createElement('div');
+        removeButton.className = 'preview-item-remove';
+        removeButton.innerHTML = '<i class="mdi mdi-close"></i>';
+        preview.appendChild(removeButton);
+        
+        reader.onload = function(e) {
+          img.src = e.target.result;
+        }
+        
+        removeButton.addEventListener('click', function() {
+          filesToUpload = filesToUpload.filter((_, i) => i !== index);
+          preview.remove();
+          
+          if (filesToUpload.length === 0) {
+            previewContainer.style.display = 'none';
+          }
+        });
+        
+        previewList.appendChild(preview);
+      });
+    }
+    
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+    
+    // 取消上传
+    cancelUpload.addEventListener('click', function() {
+      previewList.innerHTML = '';
+      previewContainer.style.display = 'none';
+      filesToUpload = [];
+      fileInput.value = '';
+    });
+    
+    // 提交上传
+    submitUpload.addEventListener('click', function() {
+      if (filesToUpload.length === 0) return;
+      
+      const formData = new FormData();
+      filesToUpload.forEach(file => {
+        formData.append('images', file);
+      });
+      
+      $.ajax({
+        url: '/admin/resources/upload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        beforeSend: function() {
+          submitUpload.disabled = true;
+          $(submitUpload).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 上传中...');
+        },
+        success: function(response) {
+          if (response.success) {
+            // 上传成功，刷新资源列表
+            $('#previewContainer').hide();
+            clearFileSelection();
+            
+            // 重新加载资源列表
+            window.location.reload();
+          } else {
+            // 显示错误信息
+            let errorMsg = response.error || '上传失败，请重试';
+            
+            // 如果有错误数组，展示所有错误
+            if (response.errors && response.errors.length > 0) {
+              errorMsg = '<ul class="mb-0 ps-3">' + 
+                response.errors.map(err => `<li>${err}</li>`).join('') + 
+                '</ul>';
+            }
+            
+            showAlert('danger', errorMsg);
+          }
+          
+          // 恢复按钮状态
+          $('#submitUpload').prop('disabled', false).html('开始上传');
+        },
+        error: function() {
+          alert('上传请求失败，请重试');
+        },
+        complete: function() {
+          submitUpload.disabled = false;
+          $(submitUpload).html('开始上传');
+        }
+      });
+    });
+    
+    // 复制资源URL
+    $('.copy-resource-url').on('click', function(e) {
+      e.stopPropagation();
+      const url = $(this).data('url');
+      
+      const tempInput = document.createElement('input');
+      tempInput.value = url;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      
+      const originalHtml = $(this).html();
+      $(this).html('<i class="mdi mdi-check"></i>');
+      
+      // 在按钮上方显示提示
+      const $card = $(this).closest('.card');
+      const $tooltip = $('<div class="copy-tooltip">URL已复制</div>');
+      $tooltip.css({
+        position: 'absolute',
+        top: '-30px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        padding: '5px 10px',
+        background: 'rgba(0,0,0,0.7)',
+        color: 'white',
+        borderRadius: '4px',
+        fontSize: '12px',
+        zIndex: 10
+      });
+      
+      $card.css('position', 'relative').append($tooltip);
+      
+      setTimeout(() => {
+        $(this).html(originalHtml);
+        $tooltip.fadeOut(200, function() {
+          $(this).remove();
+        });
+      }, 1500);
+    });
+    
+    // 替换资源
+    let resourceIdToReplace = null;
+    let resourceUrlToReplace = null;
+    
+    $('.replace-resource').on('click', function(e) {
+      e.stopPropagation();
+      
+      const resourceItem = $(this).closest('.resource-item');
+      resourceIdToReplace = $(this).data('id');
+      resourceUrlToReplace = resourceItem.find('img').attr('src');
+      
+      // 显示原图
+      $('#originalImage').attr('src', resourceUrlToReplace);
+      $('#replaceFileInput').val('');
+      $('#replacePreview').hide();
+      
+      const replaceModal = new bootstrap.Modal(document.getElementById('replaceResourceModal'));
+      replaceModal.show();
+    });
+    
+    // 预览替换图片
+    $('#replaceFileInput').on('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          $('#newImage').attr('src', e.target.result);
+          $('#replacePreview').show();
+        }
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+    
+    // 确认替换资源
+    $('#confirmReplaceResource').on('click', function() {
+      if (!resourceIdToReplace) return;
+      
+      const fileInput = document.getElementById('replaceFileInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('请选择要替换的图片');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
+      
+      const $btn = $(this);
+      
+      $.ajax({
+        url: '/admin/resources/replace/' + resourceIdToReplace,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        beforeSend: function() {
+          $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 替换中...');
+        },
+        success: function(response) {
+          if (response.success) {
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('replaceResourceModal')).hide();
+            
+            // 刷新页面或更新资源显示
+            window.location.reload();
+          } else {
+            alert('替换失败：' + (response.error || '未知错误'));
+          }
+        },
+        error: function() {
+          alert('替换请求失败，请重试');
+        },
+        complete: function() {
+          $btn.prop('disabled', false).html('替换');
+        }
+      });
+    });
+    
+    // 删除资源
+    let resourceIdToDelete = null;
+    
+    $('.delete-resource').on('click', function(e) {
+      e.stopPropagation();
+      resourceIdToDelete = $(this).data('id');
+      
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteResourceModal'));
+      deleteModal.show();
+    });
+    
+    // 确认删除资源
+    $('#confirmDeleteResource').on('click', function() {
+      if (resourceIdToDelete) {
+        const $btn = $(this);
+        
+        $.ajax({
+          url: '/admin/resources/delete/' + encodeURIComponent(resourceIdToDelete),
+          type: 'POST',
+          beforeSend: function() {
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 删除中...');
+          },
+          success: function(response) {
+            if (response.success) {
+              window.location.reload();
+            } else {
+              alert('删除失败：' + (response.error || '未知错误'));
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('删除请求失败:', xhr.responseText);
+            let errorMessage = '删除请求失败';
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (response && response.error) {
+                errorMessage = response.error;
+              }
+            } catch (e) {
+              // 解析响应失败，使用默认错误消息
+            }
+            alert('删除失败: ' + errorMessage);
+          },
+          complete: function() {
+            $btn.prop('disabled', false).html('删除');
+          }
+        });
+      }
+    });
+  });
+</script>
+{{/block}} 

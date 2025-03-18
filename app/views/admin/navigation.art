@@ -1,0 +1,547 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">
+          <i class="mdi mdi-menu"></i> 导航管理
+        </h3>
+        
+        <div>
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#navigationModal">
+            <i class="mdi mdi-plus"></i> 添加导航
+          </button>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        {{if navigations && navigations.length > 0}}
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>别名</th>
+                <th>图标</th>
+                <th>地址</th>
+                <th>外链</th>
+                <th>排序</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{each navigations}}
+              <tr>
+                <td>{{$value.title}}</td>
+                <td>{{$value.alias}}</td>
+                <td><i class="{{$value.icon}}"></i></td>
+                <td>{{$value.url}}</td>
+                <td>
+                  {{if $value.is_external}}
+                  <span class="badge bg-info">是</span>
+                  {{else}}
+                  <span class="badge bg-secondary">否</span>
+                  {{/if}}
+                </td>
+                <td>{{$value.sort_order}}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-primary btn-sm edit-nav" 
+                            data-id="{{$value.id}}"
+                            data-title="{{$value.title}}"
+                            data-alias="{{$value.alias}}"
+                            data-icon="{{$value.icon}}"
+                            data-url="{{$value.url}}"
+                            data-is-external="{{$value.is_external}}"
+                            data-sort-order="{{$value.sort_order}}">
+                      编辑
+                    </button>
+                    <button class="btn btn-danger btn-sm delete-nav" data-id="{{$value.id}}">
+                      删除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        {{else}}
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="mdi mdi-information-outline me-2" style="font-size: 20px;"></i>
+          <p class="mb-0">还没有添加任何导航。</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 导航编辑模态框 -->
+<div class="modal fade" id="navigationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">添加导航</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="navigationForm">
+          <input type="hidden" id="navId" name="id">
+          
+          <div class="mb-3">
+            <label for="title" class="form-label">导航标题</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="alias" class="form-label">导航别名</label>
+            <input type="text" class="form-control" id="alias" name="alias" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="icon" class="form-label">导航图标</label>
+            <div class="input-group mb-2">
+              <span class="input-group-text"><i id="iconPreview"></i></span>
+              <input type="text" class="form-control" id="icon" name="icon" readonly>
+            </div>
+            <div class="icon-grid">
+              <div class="icon-categories mb-3">
+                <div class="btn-group w-100">
+                  <button type="button" class="btn btn-sm btn-outline-secondary active" data-category="common">常用图标</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-category="content">内容</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-category="ui">界面</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-category="direction">方向</button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-category="other">其他</button>
+                </div>
+              </div>
+              
+              <div class="icon-search mb-3">
+                <input type="text" class="form-control form-control-sm" id="iconSearch" placeholder="搜索图标...">
+              </div>
+              
+              <div class="icon-container">
+                <!-- 常用图标 -->
+                <div class="icon-category" data-category="common">
+                  <div class="row g-2">
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-home" title="首页"><i class="fa fa-home"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-user" title="用户"><i class="fa fa-user"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-text" title="文章"><i class="fa fa-file-text"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-folder" title="分类"><i class="fa fa-folder"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-image" title="图片"><i class="fa fa-image"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-link" title="链接"><i class="fa fa-link"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-search" title="搜索"><i class="fa fa-search"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-bars" title="菜单"><i class="fa fa-bars"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-star" title="收藏"><i class="fa fa-star"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-heart" title="喜欢"><i class="fa fa-heart"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-envelope" title="邮件"><i class="fa fa-envelope"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-info-circle" title="关于"><i class="fa fa-info-circle"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-calendar" title="日历"><i class="fa fa-calendar"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-comments" title="评论"><i class="fa fa-comments"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-bell" title="通知"><i class="fa fa-bell"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cog" title="设置"><i class="fa fa-cog"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-bookmark" title="书签"><i class="fa fa-bookmark"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-shopping-cart" title="购物车"><i class="fa fa-shopping-cart"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-phone" title="电话"><i class="fa fa-phone"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-map-marker" title="位置"><i class="fa fa-map-marker"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-camera" title="相机"><i class="fa fa-camera"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-tag" title="标签"><i class="fa fa-tag"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-users" title="用户组"><i class="fa fa-users"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-question-circle" title="帮助"><i class="fa fa-question-circle"></i></div></div>
+                  </div>
+                </div>
+                
+                <!-- 内容类图标 -->
+                <div class="icon-category d-none" data-category="content">
+                  <div class="row g-2">
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file" title="文件"><i class="fa fa-file"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-text" title="文本文件"><i class="fa fa-file-text"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-image-o" title="图像文件"><i class="fa fa-file-image-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-pdf-o" title="PDF文件"><i class="fa fa-file-pdf-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-word-o" title="Word文件"><i class="fa fa-file-word-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-excel-o" title="Excel文件"><i class="fa fa-file-excel-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-powerpoint-o" title="PPT文件"><i class="fa fa-file-powerpoint-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-audio-o" title="音频文件"><i class="fa fa-file-audio-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-video-o" title="视频文件"><i class="fa fa-file-video-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-code-o" title="代码文件"><i class="fa fa-file-code-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-file-archive-o" title="压缩文件"><i class="fa fa-file-archive-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-clipboard" title="剪贴板"><i class="fa fa-clipboard"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-book" title="书籍"><i class="fa fa-book"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-newspaper-o" title="报纸"><i class="fa fa-newspaper-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-image" title="图像"><i class="fa fa-image"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-photo" title="照片"><i class="fa fa-photo"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-video-camera" title="视频"><i class="fa fa-video-camera"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-music" title="音乐"><i class="fa fa-music"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-tags" title="多标签"><i class="fa fa-tags"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-tag" title="标签"><i class="fa fa-tag"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-folder-open" title="打开的文件夹"><i class="fa fa-folder-open"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-folder" title="文件夹"><i class="fa fa-folder"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-tasks" title="任务"><i class="fa fa-tasks"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-list" title="列表"><i class="fa fa-list"></i></div></div>
+                  </div>
+                </div>
+                
+                <!-- 界面类图标 -->
+                <div class="icon-category d-none" data-category="ui">
+                  <div class="row g-2">
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-search" title="搜索"><i class="fa fa-search"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-bars" title="菜单"><i class="fa fa-bars"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cog" title="设置"><i class="fa fa-cog"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cogs" title="设置集"><i class="fa fa-cogs"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-wrench" title="工具"><i class="fa fa-wrench"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-sliders" title="滑块"><i class="fa fa-sliders"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-desktop" title="桌面"><i class="fa fa-desktop"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-laptop" title="笔记本"><i class="fa fa-laptop"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-tablet" title="平板"><i class="fa fa-tablet"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-mobile" title="手机"><i class="fa fa-mobile"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-trash" title="垃圾桶"><i class="fa fa-trash"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-download" title="下载"><i class="fa fa-download"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-upload" title="上传"><i class="fa fa-upload"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-refresh" title="刷新"><i class="fa fa-refresh"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-spinner" title="加载中"><i class="fa fa-spinner"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-undo" title="撤销"><i class="fa fa-undo"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-repeat" title="重做"><i class="fa fa-repeat"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-edit" title="编辑"><i class="fa fa-edit"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-pencil" title="笔"><i class="fa fa-pencil"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-save" title="保存"><i class="fa fa-save"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-plus" title="添加"><i class="fa fa-plus"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-minus" title="减少"><i class="fa fa-minus"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-times" title="关闭"><i class="fa fa-times"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-check" title="确认"><i class="fa fa-check"></i></div></div>
+                  </div>
+                </div>
+                
+                <!-- 方向类图标 -->
+                <div class="icon-category d-none" data-category="direction">
+                  <div class="row g-2">
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrow-up" title="向上箭头"><i class="fa fa-arrow-up"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrow-down" title="向下箭头"><i class="fa fa-arrow-down"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrow-left" title="向左箭头"><i class="fa fa-arrow-left"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrow-right" title="向右箭头"><i class="fa fa-arrow-right"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-angle-up" title="向上角"><i class="fa fa-angle-up"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-angle-down" title="向下角"><i class="fa fa-angle-down"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-angle-left" title="向左角"><i class="fa fa-angle-left"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-angle-right" title="向右角"><i class="fa fa-angle-right"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-chevron-up" title="上V形"><i class="fa fa-chevron-up"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-chevron-down" title="下V形"><i class="fa fa-chevron-down"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-chevron-left" title="左V形"><i class="fa fa-chevron-left"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-chevron-right" title="右V形"><i class="fa fa-chevron-right"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-caret-up" title="上三角"><i class="fa fa-caret-up"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-caret-down" title="下三角"><i class="fa fa-caret-down"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-caret-left" title="左三角"><i class="fa fa-caret-left"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-caret-right" title="右三角"><i class="fa fa-caret-right"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-long-arrow-up" title="长向上箭头"><i class="fa fa-long-arrow-up"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-long-arrow-down" title="长向下箭头"><i class="fa fa-long-arrow-down"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-long-arrow-left" title="长向左箭头"><i class="fa fa-long-arrow-left"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-long-arrow-right" title="长向右箭头"><i class="fa fa-long-arrow-right"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-exchange" title="交换"><i class="fa fa-exchange"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrows" title="箭头"><i class="fa fa-arrows"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrows-h" title="水平箭头"><i class="fa fa-arrows-h"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-arrows-v" title="垂直箭头"><i class="fa fa-arrows-v"></i></div></div>
+                  </div>
+                </div>
+                
+                <!-- 其他图标 -->
+                <div class="icon-category d-none" data-category="other">
+                  <div class="row g-2">
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-wechat" title="微信"><i class="fa fa-wechat"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-weibo" title="微博"><i class="fa fa-weibo"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-qq" title="QQ"><i class="fa fa-qq"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-facebook" title="Facebook"><i class="fa fa-facebook"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-twitter" title="Twitter"><i class="fa fa-twitter"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-instagram" title="Instagram"><i class="fa fa-instagram"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-linkedin" title="LinkedIn"><i class="fa fa-linkedin"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-github" title="GitHub"><i class="fa fa-github"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-youtube" title="YouTube"><i class="fa fa-youtube"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-rss" title="RSS"><i class="fa fa-rss"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-globe" title="全球"><i class="fa fa-globe"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-map" title="地图"><i class="fa fa-map"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-clock-o" title="时钟"><i class="fa fa-clock-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-wifi" title="WiFi"><i class="fa fa-wifi"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cloud" title="云"><i class="fa fa-cloud"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cloud-upload" title="上传到云"><i class="fa fa-cloud-upload"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cloud-download" title="从云下载"><i class="fa fa-cloud-download"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-lightbulb-o" title="灯泡"><i class="fa fa-lightbulb-o"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-coffee" title="咖啡"><i class="fa fa-coffee"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-cutlery" title="餐具"><i class="fa fa-cutlery"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-gift" title="礼物"><i class="fa fa-gift"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-trophy" title="奖杯"><i class="fa fa-trophy"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-diamond" title="钻石"><i class="fa fa-diamond"></i></div></div>
+                    <div class="col-2"><div class="icon-item" data-icon="fa fa-credit-card" title="信用卡"><i class="fa fa-credit-card"></i></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">点击选择导航显示的图标</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="url" class="form-label">导航地址</label>
+            <input type="text" class="form-control" id="url" name="url" required>
+          </div>
+          
+          <div class="mb-3">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="isExternal" name="is_external">
+              <label class="form-check-label" for="isExternal">是否外链</label>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="sortOrder" class="form-label">排序</label>
+            <input type="number" class="form-control" id="sortOrder" name="sort_order" value="0">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="saveNavigation">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 确认删除的模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">删除导航</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex">
+          <i class="mdi mdi-alert text-warning me-2" style="font-size: 24px;"></i>
+          <p class="mb-0">确定要删除这个导航吗？此操作不可撤销。</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger text-white" id="confirmDelete">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'styles'}}
+<style>
+.icon-grid {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  background: #f8f9fa;
+}
+.icon-container {
+  max-height: 240px;
+  overflow-y: auto;
+}
+.icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+.icon-item:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.08);
+}
+.icon-item.selected {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+.icon-item i {
+  font-size: 1.2rem;
+}
+.icon-search {
+  position: relative;
+}
+.icon-search:before {
+  content: "\f002";
+  font-family: FontAwesome;
+  position: absolute;
+  left: 10px;
+  top: 6px;
+  color: #adb5bd;
+  z-index: 1;
+}
+.icon-search input {
+  padding-left: 30px;
+}
+</style>
+{{/block}}
+
+{{block 'scripts'}}
+<script>
+  $(document).ready(function() {
+    let navIdToDelete = null;
+    const navigationModal = new bootstrap.Modal(document.getElementById('navigationModal'));
+    
+    // 添加导航按钮点击事件
+    $('[data-bs-target="#navigationModal"]').on('click', function() {
+      $('#navigationForm')[0].reset();
+      $('#navId').val('');
+      $('.icon-item').removeClass('selected');
+      $('#navigationModal .modal-title').text('添加导航');
+    });
+    
+    // 编辑导航按钮点击事件
+    $('.edit-nav').on('click', function() {
+      const $btn = $(this);
+      const id = $btn.data('id');
+      
+      $('#navId').val(id);
+      $('#title').val($btn.data('title'));
+      $('#alias').val($btn.data('alias'));
+      $('#icon').val($btn.data('icon'));
+      $('#url').val($btn.data('url'));
+      $('#isExternal').prop('checked', $btn.data('is-external') === 1);
+      $('#sortOrder').val($btn.data('sort-order'));
+      
+      // 更新图标预览和选中状态
+      updateIconPreview($btn.data('icon'));
+      $('.icon-item').removeClass('selected');
+      $(`.icon-item[data-icon="${$btn.data('icon')}"]`).addClass('selected');
+      
+      $('#navigationModal .modal-title').text('编辑导航');
+      navigationModal.show();
+    });
+    
+    // 图标点击选择事件
+    $('.icon-item').on('click', function() {
+      const icon = $(this).data('icon');
+      $('.icon-item').removeClass('selected');
+      $(this).addClass('selected');
+      $('#icon').val(icon);
+      updateIconPreview(icon);
+    });
+    
+    // 图标分类切换
+    $('.icon-categories button').on('click', function() {
+      const category = $(this).data('category');
+      $('.icon-categories button').removeClass('active');
+      $(this).addClass('active');
+      $('.icon-category').addClass('d-none');
+      $(`.icon-category[data-category="${category}"]`).removeClass('d-none');
+    });
+    
+    // 图标搜索功能
+    $('#iconSearch').on('input', function() {
+      const searchTerm = $(this).val().toLowerCase();
+      if (searchTerm === '') {
+        // 如果搜索框为空，根据当前选中的分类显示图标
+        const activeCategory = $('.icon-categories button.active').data('category');
+        $('.icon-category').addClass('d-none');
+        $(`.icon-category[data-category="${activeCategory}"]`).removeClass('d-none');
+        return;
+      }
+      
+      // 隐藏所有分类
+      $('.icon-category').addClass('d-none');
+      
+      // 遍历所有图标，显示匹配的图标
+      $('.icon-item').each(function() {
+        const $item = $(this);
+        const icon = $item.data('icon').toLowerCase();
+        const title = $item.attr('title').toLowerCase();
+        
+        if (icon.includes(searchTerm) || title.includes(searchTerm)) {
+          $item.parent().show();
+          $item.closest('.icon-category').removeClass('d-none');
+        } else {
+          $item.parent().hide();
+        }
+      });
+    });
+    
+    // 更新图标预览
+    function updateIconPreview(icon) {
+      if (icon) {
+        $('#iconPreview').removeClass().addClass(icon);
+      } else {
+        $('#iconPreview').removeClass();
+      }
+    }
+    
+    // 保存导航
+    $('#saveNavigation').on('click', function() {
+      const $btn = $(this);
+      const formData = {
+        title: $('#title').val(),
+        alias: $('#alias').val(),
+        icon: $('#icon').val(),
+        url: $('#url').val(),
+        is_external: $('#isExternal').prop('checked'),
+        sort_order: parseInt($('#sortOrder').val()) || 0
+      };
+      
+      // 显示加载状态
+      $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 保存中...');
+      
+      // 发送请求
+      $.ajax({
+        url: '/admin/navigation/save' + ($('#navId').val() ? '/' + $('#navId').val() : ''),
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+          if (response.success) {
+            window.location.reload();
+          } else {
+            alert('保存失败：' + response.error);
+          }
+        },
+        error: function(xhr) {
+          alert('保存失败：' + (xhr.responseJSON?.error || '未知错误'));
+        },
+        complete: function() {
+          $btn.prop('disabled', false).html('保存');
+        }
+      });
+    });
+    
+    // 删除导航按钮点击事件
+    $('.delete-nav').on('click', function() {
+      navIdToDelete = $(this).data('id');
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+      deleteModal.show();
+    });
+    
+    // 确认删除
+    $('#confirmDelete').on('click', function() {
+      if (navIdToDelete) {
+        const $btn = $(this);
+        
+        $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 删除中...');
+        
+        $.ajax({
+          url: '/admin/navigation/delete/' + navIdToDelete,
+          type: 'POST',
+          success: function(response) {
+            if (response.success) {
+              window.location.reload();
+            } else {
+              alert('删除失败：' + response.error);
+            }
+          },
+          error: function() {
+            alert('删除请求失败，请重试');
+          },
+          complete: function() {
+            $btn.prop('disabled', false).html('删除');
+          }
+        });
+      }
+    });
+  });
+</script>
+{{/block}} 

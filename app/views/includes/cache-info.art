@@ -1,0 +1,9 @@
+{{if cacheInfo}}
+<div class="cache-info" style="position: fixed; bottom: 0; right: 0; background-color: rgba(0,0,0,0.5); color: #fff; padding: 5px 10px; font-size: 12px; border-top-left-radius: 5px; z-index: 1000;">
+  {{if cacheInfo.fromCache}}
+  <span title="缓存生成时间：{{cacheInfo.cachedTime}}">🔄 页面来自缓存{{if cacheInfo.age}} ({{cacheInfo.age}}分钟){{/if}}</span>
+  {{else}}
+  <span>⚡ 实时生成</span>
+  {{/if}}
+</div>
+{{/if}} 

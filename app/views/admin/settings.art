@@ -1,0 +1,774 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="page-breadcrumb">
+  <div class="row">
+    <div class="col-5 align-self-center">
+      <h4 class="page-title">高级设置</h4>
+    </div>
+    <div class="col-7 align-self-center">
+      <div class="d-flex align-items-center justify-content-end">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="/admin">首页</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">高级设置</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <!-- 选项卡导航 -->
+          <ul class="nav nav-tabs" id="settingTabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="basic-tab" data-bs-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">站点基本设置</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="display-tab" data-bs-toggle="tab" href="#display" role="tab" aria-controls="display" aria-selected="false">显示设置</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="cache-tab" data-bs-toggle="tab" href="#cache" role="tab" aria-controls="cache" aria-selected="false">缓存设置</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="upload-tab" data-bs-toggle="tab" href="#upload" role="tab" aria-controls="upload" aria-selected="false">上传设置</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">用户信息</a>
+            </li>
+          </ul>
+          
+          <!-- 选项卡内容 -->
+          <div class="tab-content p-3" id="settingsTabContent">
+            <!-- 基本设置选项卡 -->
+            <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+              <!-- 消息提示区域 -->
+              <div id="basicSettingsAlert" class="alert alert-dismissible fade" role="alert" style="display: none;">
+                <span class="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              
+              <form id="basicSettingsForm">
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="site_title" class="form-label">站点标题 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="site_title" name="site_title" value="{{settings.site_title}}" required>
+                    <div class="form-text">显示在浏览器标题栏和网站顶部的站点名称</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="site_subtitle" class="form-label">站点副标题</label>
+                    <input type="text" class="form-control" id="site_subtitle" name="site_subtitle" value="{{settings.site_subtitle}}">
+                    <div class="form-text">显示在站点标题旁边的简短描述</div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="site_logo" class="form-label">站点Logo</label>
+                  <div class="input-group">
+                    <input type="file" class="form-control" id="site_logo" name="logo" accept="image/*">
+                    <button type="button" class="btn btn-outline-primary" id="uploadLogoBtn">上传Logo</button>
+                  </div>
+                  <div class="form-text">推荐尺寸: 200px x 60px</div>
+                  
+                  {{if settings.site_logo}}
+                  <div class="mt-2" id="logoPreview">
+                    <img src="{{settings.site_logo}}" alt="站点Logo" class="img-thumbnail" style="max-height: 60px;">
+                  </div>
+                  {{else}}
+                  <div class="mt-2" id="logoPreview" style="display: none;">
+                    <img src="" alt="站点Logo" class="img-thumbnail" style="max-height: 60px;">
+                  </div>
+                  {{/if}}
+                </div>
+                
+                <div class="mb-3">
+                  <label for="site_description" class="form-label">站点描述</label>
+                  <textarea class="form-control" id="site_description" name="site_description" rows="3">{{settings.site_description}}</textarea>
+                  <div class="form-text">用于SEO的站点描述，建议不超过150个字符</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="site_keywords" class="form-label">SEO关键词</label>
+                  <input type="text" class="form-control" id="site_keywords" name="site_keywords" value="{{settings.site_keywords}}">
+                  <div class="form-text">多个关键词用英文逗号分隔</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="site_copyright" class="form-label">版权信息</label>
+                  <input type="text" class="form-control" id="site_copyright" name="site_copyright" value="{{settings.site_copyright}}">
+                  <div class="form-text">显示在网站底部的版权信息</div>
+                </div>
+                
+                <!-- 自定义配置表单 -->
+                <hr>
+                <h5 class="mb-3">自定义配置</h5>
+                
+                <div id="customSettingsContainer">
+                  <!-- 这里将动态插入自定义设置项 -->
+                  {{each customSettings setting}}
+                  <div class="row mb-3 custom-setting-item">
+                    <div class="col-md-5">
+                      <input type="text" class="form-control custom-key" value="{{setting.key}}" placeholder="配置名称">
+                    </div>
+                    <div class="col-md-5">
+                      <input type="text" class="form-control custom-value" value="{{setting.value}}" placeholder="配置值">
+                    </div>
+                    <div class="col-md-2">
+                      <button type="button" class="btn btn-danger btn-remove-setting">删除</button>
+                    </div>
+                  </div>
+                  {{/each}}
+                </div>
+                
+                <div class="mb-3">
+                  <button type="button" class="btn btn-outline-secondary" id="addCustomSettingBtn">
+                    <i class="mdi mdi-plus"></i> 添加自定义配置
+                  </button>
+                </div>
+                
+                <div class="text-end">
+                  <button type="submit" class="btn btn-primary">保存基本设置</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- 显示设置选项卡 -->
+            <div class="tab-pane fade" id="display" role="tabpanel" aria-labelledby="display-tab">
+              <!-- 消息提示区域 -->
+              <div id="displaySettingsAlert" class="alert alert-dismissible fade" role="alert" style="display: none;">
+                <span class="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              
+              <form id="displaySettingsForm">
+                <div class="mb-3">
+                  <label for="articles_per_page" class="form-label">每页显示文章数量</label>
+                  <input type="number" class="form-control" id="articles_per_page" name="articles_per_page" value="{{settings.articles_per_page}}" min="1" required>
+                  <div class="form-text">前台文章列表页每页显示的文章数量</div>
+                </div>
+                
+                <div class="text-end">
+                  <button type="submit" class="btn btn-primary">保存显示设置</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- 缓存设置选项卡 -->
+            <div class="tab-pane fade" id="cache" role="tabpanel" aria-labelledby="cache-tab">
+              <!-- 消息提示区域 -->
+              <div id="cacheSettingsAlert" class="alert alert-dismissible fade" role="alert" style="display: none;">
+                <span class="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              
+              <form id="cacheSettingsForm">
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="enable_cache" name="enable_cache" {{if settings.enable_cache === 'true'}}checked{{/if}}>
+                    <label class="form-check-label" for="enable_cache">启用页面缓存</label>
+                  </div>
+                  <div class="form-text">开启缓存可以提高页面加载速度，减轻服务器负担</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="cache_duration" class="form-label">缓存有效时间（分钟）</label>
+                  <input type="number" class="form-control" id="cache_duration" name="cache_duration" value="{{settings.cache_duration || 60}}" min="1" max="1440">
+                  <div class="form-text">页面缓存的有效期，超过此时间将重新生成缓存</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="cache_exclude" class="form-label">排除缓存的页面</label>
+                  <textarea class="form-control" id="cache_exclude" name="cache_exclude" rows="3">{{settings.cache_exclude}}</textarea>
+                  <div class="form-text">不需要缓存的页面路径，每行一个，支持通配符*</div>
+                </div>
+                
+                <div class="mb-3">
+                  <button type="submit" class="btn btn-primary">保存缓存设置</button>
+                  <button type="button" id="clearCacheBtn" class="btn btn-danger ms-2">清除所有缓存</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- 上传设置选项卡 -->
+            <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+              <!-- 消息提示区域 -->
+              <div id="uploadSettingsAlert" class="alert alert-dismissible fade" role="alert" style="display: none;">
+                <span class="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              
+              <form id="uploadSettingsForm">
+                <div class="mb-3">
+                  <label for="max_file_size" class="form-label">最大文件上传大小 (MB)</label>
+                  <input type="number" class="form-control" id="max_file_size" name="max_file_size" value="{{settings.max_file_size || 5}}" min="1" max="50">
+                  <div class="form-text">资源管理器允许上传的最大文件大小</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="max_avatar_size" class="form-label">最大头像上传大小 (MB)</label>
+                  <input type="number" class="form-control" id="max_avatar_size" name="max_avatar_size" value="{{settings.max_avatar_size || 2}}" min="1" max="10">
+                  <div class="form-text">用户头像允许上传的最大文件大小</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="max_logo_size" class="form-label">最大Logo上传大小 (MB)</label>
+                  <input type="number" class="form-control" id="max_logo_size" name="max_logo_size" value="{{settings.max_logo_size || 2}}" min="1" max="10">
+                  <div class="form-text">站点Logo允许上传的最大文件大小</div>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label">允许的图片格式</label>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="image_type_jpg" name="allowed_image_types" value="image/jpeg" {{if !settings.allowed_image_types || settings.allowed_image_types.includes('image/jpeg')}}checked{{/if}}>
+                    <label class="form-check-label" for="image_type_jpg">JPG/JPEG</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="image_type_png" name="allowed_image_types" value="image/png" {{if !settings.allowed_image_types || settings.allowed_image_types.includes('image/png')}}checked{{/if}}>
+                    <label class="form-check-label" for="image_type_png">PNG</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="image_type_gif" name="allowed_image_types" value="image/gif" {{if !settings.allowed_image_types || settings.allowed_image_types.includes('image/gif')}}checked{{/if}}>
+                    <label class="form-check-label" for="image_type_gif">GIF</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="image_type_svg" name="allowed_image_types" value="image/svg+xml" {{if settings.allowed_image_types && settings.allowed_image_types.includes('image/svg+xml')}}checked{{/if}}>
+                    <label class="form-check-label" for="image_type_svg">SVG</label>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <button type="submit" class="btn btn-primary">保存上传设置</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- 用户信息选项卡 -->
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+              <!-- 消息提示区域 -->
+              <div id="profileSettingsAlert" class="alert alert-dismissible fade" role="alert" style="display: none;">
+                <span class="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              
+              <div class="row">
+                <!-- 头像上传 -->
+                <div class="col-md-4 mb-4">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title mb-3">个人头像</h5>
+                      
+                      <div class="text-center mb-3">
+                        <div class="avatar-preview">
+                          {{if user.avatar}}
+                          <img src="{{user.avatar}}" alt="用户头像" class="rounded-circle img-thumbnail" id="avatarPreview" style="width: 150px; height: 150px; object-fit: cover;">
+                          {{else}}
+                          <img src="/admin/css/icons/user.jpg" alt="用户头像" class="rounded-circle img-thumbnail" id="avatarPreview" style="width: 150px; height: 150px; object-fit: cover;">
+                          {{/if}}
+                        </div>
+                      </div>
+                      
+                      <form id="avatarForm">
+                        <div class="mb-3">
+                          <label for="avatar" class="form-label">上传新头像</label>
+                          <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+                          <div class="form-text">支持JPG、PNG格式，建议尺寸200x200px</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                          <button type="submit" class="btn btn-primary">上传头像</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 用户信息修改 -->
+                <div class="col-md-8">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title mb-3">账号信息</h5>
+                      
+                      <form id="usernameForm" class="mb-4">
+                        <div class="mb-3">
+                          <label for="username" class="form-label">用户名</label>
+                          <input type="text" class="form-control" id="username" name="username" value="{{user.username}}" required>
+                          <div class="form-text">修改后将需要重新登录</div>
+                        </div>
+                        
+                        <div class="text-end">
+                          <button type="submit" class="btn btn-primary">更新用户名</button>
+                        </div>
+                      </form>
+                      
+                      <hr>
+                      
+                      <h5 class="card-title mb-3">修改密码</h5>
+                      <form id="passwordForm">
+                        <div class="mb-3">
+                          <label for="currentPassword" class="form-label">当前密码</label>
+                          <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <label for="newPassword" class="form-label">新密码</label>
+                          <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                          <div class="form-text">密码长度至少6位，建议使用字母、数字和符号的组合</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <label for="confirmPassword" class="form-label">确认新密码</label>
+                          <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+                        
+                        <div class="text-end">
+                          <button type="submit" class="btn btn-primary">更新密码</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'scripts'}}
+<script>
+  $(document).ready(function() {
+    // 通过URL参数切换到指定的选项卡
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    if (tabParam) {
+      // 激活指定的选项卡
+      $(`#${tabParam}-tab`).tab('show');
+    }
+    
+    // 显示提示消息
+    function showAlert(elementId, message, isSuccess) {
+      const alertElement = $(`#${elementId}`);
+      alertElement.removeClass('alert-success alert-danger alert-warning fade show');
+      alertElement.addClass(isSuccess ? 'alert-success' : 'alert-danger');
+      alertElement.addClass('show');
+      alertElement.find('.alert-message').text(message);
+      alertElement.show();
+      
+      // 滚动到消息位置
+      $('html, body').animate({
+        scrollTop: alertElement.offset().top - 100
+      }, 200);
+      
+      // 5秒后自动关闭
+      setTimeout(function() {
+        alertElement.removeClass('show');
+        setTimeout(function() {
+          alertElement.hide();
+        }, 150);
+      }, 5000);
+    }
+    
+    // 头像预览
+    $('#avatar').on('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          $('#avatarPreview').attr('src', e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // 上传头像
+    $('#avatarForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const fileInput = $('#avatar')[0];
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showAlert('profileSettingsAlert', '请先选择要上传的头像图片', false);
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('avatar', fileInput.files[0]);
+      
+      $.ajax({
+        url: '/admin/settings/upload-avatar',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          if (response.success) {
+            // 更新顶部导航栏中的头像
+            $('.nav-link.pro-pic img').attr('src', response.avatar);
+            showAlert('profileSettingsAlert', response.message, true);
+          } else {
+            showAlert('profileSettingsAlert', '上传失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '上传失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('profileSettingsAlert', '上传失败: ' + errorMsg, false);
+        }
+      });
+    });
+    
+    // 更新用户名
+    $('#usernameForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const username = $('#username').val().trim();
+      if (!username) {
+        showAlert('profileSettingsAlert', '用户名不能为空', false);
+        return;
+      }
+      
+      $.ajax({
+        url: '/admin/settings/update-username',
+        type: 'POST',
+        data: { username },
+        success: function(response) {
+          if (response.success) {
+            showAlert('profileSettingsAlert', response.message, true);
+            
+            // 更新导航栏用户名
+            $('.text-dark').text(username);
+            
+            // 如果需要重新登录，提示用户
+            if (response.requiresRelogin) {
+              setTimeout(function() {
+                if (confirm('用户名已更新，需要重新登录。是否现在跳转到登录页面？')) {
+                  window.location.href = '/admin/logout';
+                }
+              }, 1500);
+            }
+          } else {
+            showAlert('profileSettingsAlert', '更新失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '更新失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('profileSettingsAlert', '更新失败: ' + errorMsg, false);
+        }
+      });
+    });
+    
+    // 更新密码
+    $('#passwordForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const currentPassword = $('#currentPassword').val();
+      const newPassword = $('#newPassword').val();
+      const confirmPassword = $('#confirmPassword').val();
+      
+      // 基本验证
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        showAlert('profileSettingsAlert', '所有密码字段都为必填项', false);
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showAlert('profileSettingsAlert', '新密码长度至少6位', false);
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showAlert('profileSettingsAlert', '新密码和确认密码不匹配', false);
+        return;
+      }
+      
+      $.ajax({
+        url: '/admin/settings/update-password',
+        type: 'POST',
+        data: { 
+          currentPassword,
+          newPassword,
+          confirmPassword
+        },
+        success: function(response) {
+          if (response.success) {
+            // 清空表单
+            $('#passwordForm')[0].reset();
+            showAlert('profileSettingsAlert', response.message, true);
+            
+            // 如果需要重新登录，提示用户
+            if (response.requiresRelogin) {
+              setTimeout(function() {
+                if (confirm('密码已更新，需要重新登录。是否现在跳转到登录页面？')) {
+                  window.location.href = '/admin/logout';
+                }
+              }, 1500);
+            }
+          } else {
+            showAlert('profileSettingsAlert', '更新失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '更新失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('profileSettingsAlert', '更新失败: ' + errorMsg, false);
+        }
+      });
+    });
+    
+    // 上传Logo
+    $('#uploadLogoBtn').on('click', function() {
+      const fileInput = $('#site_logo')[0];
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showAlert('basicSettingsAlert', '请先选择要上传的Logo图片', false);
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('logo', fileInput.files[0]);
+      
+      $.ajax({
+        url: '/admin/settings/upload-logo',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          if (response.success) {
+            // 更新Logo预览
+            $('#logoPreview').show().find('img').attr('src', response.logo);
+            showAlert('basicSettingsAlert', response.message, true);
+          } else {
+            showAlert('basicSettingsAlert', '上传失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '上传失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('basicSettingsAlert', '上传失败: ' + errorMsg, false);
+        }
+      });
+    });
+    
+    // 添加自定义配置项
+    $('#addCustomSettingBtn').on('click', function() {
+      const newSettingItem = `
+        <div class="row mb-3 custom-setting-item">
+          <div class="col-md-5">
+            <input type="text" class="form-control custom-key" placeholder="配置名称">
+          </div>
+          <div class="col-md-5">
+            <input type="text" class="form-control custom-value" placeholder="配置值">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-danger btn-remove-setting">删除</button>
+          </div>
+        </div>
+      `;
+      $('#customSettingsContainer').append(newSettingItem);
+    });
+    
+    // 删除自定义配置项
+    $(document).on('click', '.btn-remove-setting', function() {
+      $(this).closest('.custom-setting-item').remove();
+    });
+    
+    // 保存基本设置
+    $('#basicSettingsForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        site_title: $('#site_title').val(),
+        site_subtitle: $('#site_subtitle').val(),
+        site_description: $('#site_description').val(),
+        site_keywords: $('#site_keywords').val(),
+        site_copyright: $('#site_copyright').val()
+      };
+      
+      // 收集自定义配置项
+      const customSettings = [];
+      $('.custom-setting-item').each(function() {
+        const key = $(this).find('.custom-key').val().trim();
+        const value = $(this).find('.custom-value').val().trim();
+        
+        if (key) {
+          customSettings.push({ key, value });
+        }
+      });
+      
+      // 添加自定义配置到表单数据
+      formData.customSettings = JSON.stringify(customSettings);
+      
+      $.ajax({
+        url: '/admin/settings/basic',
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+          if (response.success) {
+            showAlert('basicSettingsAlert', response.message, true);
+          } else {
+            showAlert('basicSettingsAlert', '保存失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '保存失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('basicSettingsAlert', '保存失败: ' + errorMsg, false);
+        }
+      });
+    });
+    
+    // 保存显示设置
+    $('#displaySettingsForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        articles_per_page: $('#articles_per_page').val()
+      };
+      
+      $.ajax({
+        url: '/admin/settings/display',
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+          if (response.success) {
+            showAlert('displaySettingsAlert', response.message, true);
+          } else {
+            showAlert('displaySettingsAlert', '保存失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '保存失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('displaySettingsAlert', '保存失败: ' + errorMsg, false);
+        }
+      });
+    });
+    
+    // 缓存设置表单处理
+    $('#cacheSettingsForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        enable_cache: $('#enable_cache').is(':checked') ? 'true' : 'false',
+        cache_duration: $('#cache_duration').val(),
+        cache_exclude: $('#cache_exclude').val()
+      };
+      
+      $.ajax({
+        url: '/admin/settings/cache',
+        type: 'POST',
+        data: formData,
+        beforeSend: function() {
+          // 禁用按钮，显示加载状态
+          $('#cacheSettingsForm button[type="submit"]').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...');
+        },
+        success: function(response) {
+          if (response.success) {
+            showAlert('cacheSettingsAlert', 'success', '缓存设置已保存成功');
+          } else {
+            showAlert('cacheSettingsAlert', 'danger', response.message || '保存失败，请重试');
+          }
+        },
+        error: function() {
+          showAlert('cacheSettingsAlert', 'danger', '网络错误，请重试');
+        },
+        complete: function() {
+          // 恢复按钮状态
+          $('#cacheSettingsForm button[type="submit"]').prop('disabled', false).text('保存缓存设置');
+        }
+      });
+    });
+    
+    // 上传设置表单处理
+    $('#uploadSettingsForm').on('submit', function(e) {
+      e.preventDefault();
+      
+      // 获取选中的图片类型
+      const allowedImageTypes = [];
+      $('input[name="allowed_image_types"]:checked').each(function() {
+        allowedImageTypes.push($(this).val());
+      });
+      
+      const formData = {
+        max_file_size: $('#max_file_size').val(),
+        allowed_image_types: allowedImageTypes,
+        max_avatar_size: $('#max_avatar_size').val(),
+        max_logo_size: $('#max_logo_size').val()
+      };
+      
+      $.ajax({
+        url: '/admin/settings/upload',
+        type: 'POST',
+        data: formData,
+        beforeSend: function() {
+          // 禁用按钮，显示加载状态
+          $('#uploadSettingsForm button[type="submit"]').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...');
+        },
+        success: function(response) {
+          if (response.success) {
+            showAlert('uploadSettingsAlert', 'success', '上传设置已保存成功');
+          } else {
+            showAlert('uploadSettingsAlert', 'danger', response.message || '保存失败，请重试');
+          }
+        },
+        error: function() {
+          showAlert('uploadSettingsAlert', 'danger', '网络错误，请重试');
+        },
+        complete: function() {
+          // 恢复按钮状态
+          $('#uploadSettingsForm button[type="submit"]').prop('disabled', false).text('保存上传设置');
+        }
+      });
+    });
+    
+    // 清除缓存处理
+    $('#clearCacheBtn').on('click', function() {
+      if (!confirm('确定要清除所有缓存吗？')) {
+        return;
+      }
+      
+      $.ajax({
+        url: '/admin/settings/clear-cache',
+        type: 'POST',
+        success: function(response) {
+          if (response.success) {
+            showAlert('cacheSettingsAlert', response.message, true);
+          } else {
+            showAlert('cacheSettingsAlert', '清除缓存失败: ' + response.message, false);
+          }
+        },
+        error: function(xhr) {
+          let errorMsg = '清除缓存失败';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMsg = xhr.responseJSON.message;
+          }
+          showAlert('cacheSettingsAlert', '清除缓存失败: ' + errorMsg, false);
+        }
+      });
+    });
+  });
+</script>
+{{/block}} 

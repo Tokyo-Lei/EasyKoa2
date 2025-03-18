@@ -1,0 +1,46 @@
+{
+  "name": "easykoa2",
+  "version": "1.0.0",
+  "description": "一个基于Koa2的个人博客系统",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "startup": "node start.js",
+    "startup:dev": "cross-env NODE_ENV=development node start.js",
+    "startup:prod": "cross-env NODE_ENV=production node start.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "koa",
+    "blog",
+    "sqlite",
+    "art-template"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "art-template": "^4.13.2",
+    "better-sqlite3": "^8.0.1",
+    "dotenv": "^16.4.7",
+    "formidable": "^2.1.1",
+    "koa": "^2.14.1",
+    "koa-art-template": "^1.1.1",
+    "koa-body": "^6.0.1",
+    "koa-bodyparser": "^4.3.0",
+    "koa-logger": "^3.2.1",
+    "koa-router": "^12.0.0",
+    "koa-session": "^6.4.0",
+    "koa-static": "^5.0.0",
+    "marked": "^4.2.12",
+    "mkdirp": "^1.0.4",
+    "moment": "^2.29.4",
+    "pinyin": "^4.0.0-alpha.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.0.1"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

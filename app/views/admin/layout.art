@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{title}} - Edit</title>
+    
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/admin/css/icons/favicon.png">
+    
+    <!-- Material Design Icons -->
+    <link rel="stylesheet" href="/admin/css/materialdesignicons.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <!-- Custom CSS -->
+    <link href="/admin/css/style.min.css" rel="stylesheet">
+    
+    <!-- 自定义样式覆盖 -->
+    <style>
+      .sidebar-nav ul .sidebar-item .sidebar-link {
+        padding: 12px 15px;
+      }
+      
+      .sidebar-nav ul .sidebar-item .sidebar-link i {
+        font-size: 18px;
+      }
+      
+      .container-fluid {
+        padding: 25px;
+      }
+      
+      .page-breadcrumb {
+        padding: 0 25px;
+        margin-bottom: 0;
+      }
+      
+      .card {
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      }
+      
+      .card-body {
+        padding: 25px;
+      }
+      
+      .topbar .top-navbar .navbar-header .navbar-brand {
+        padding: 0 20px;
+      }
+      
+      .sidebar-nav {
+        padding-top: 10px;
+      }
+      
+      /* 折叠侧边栏修复 */
+      .mini-sidebar .sidebar-nav ul .sidebar-item {
+        text-align: center;
+        position: relative;
+      }
+      
+      .sidebar-nav ul .sidebar-item.selected {
+        position: relative;
+      }
+      
+      .mini-sidebar .sidebar-nav ul .sidebar-item .sidebar-link .hide-menu,
+      .mini-sidebar .sidebar-nav ul .sidebar-item.selected .hide-menu,
+      .mini-sidebar .sidebar-nav ul .sidebar-item:after {
+        display: none;
+      }
+      
+      /* 隐藏"selected"文本 */
+      .mini-sidebar .sidebar-nav ul .sidebar-item.selected:after {
+        content: none;
+      }
+      
+      .sidebar-nav ul .sidebar-item.selected:after {
+        content: none;
+      }
+      
+      #main-wrapper[data-sidebartype="mini-sidebar"] .sidebar-nav ul .sidebar-item.selected,
+      #main-wrapper[data-sidebartype="mini-sidebar"] .sidebar-nav ul .sidebar-item,
+      #main-wrapper[data-sidebartype="mini-sidebar"] .sidebar-nav ul .sidebar-item .sidebar-link {
+        width: 60px;
+        overflow: visible;
+      }
+      
+      /* 去掉伪元素文本 */
+      .sidebar-item.selected:after,
+      .mini-sidebar .sidebar-item.selected:after {
+        content: none !important;
+        display: none !important;
+      }
+      
+      @media (max-width: 767px) {
+        .container-fluid {
+          padding: 15px;
+        }
+        
+        .card-body {
+          padding: 20px;
+        }
+      }
+      
+      /* 分页样式增强 */
+      .pagination-info {
+        color: #6c757d;
+        font-size: 0.875rem;
+      }
+      
+      .pagination {
+        margin-bottom: 0;
+      }
+      
+      .pagination .page-item.active .page-link {
+        background-color: #5f76e8;
+        border-color: #5f76e8;
+      }
+      
+      .pagination .page-link {
+        color: #5f76e8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        font-size: 0.875rem;
+      }
+      
+      .pagination .page-link:hover {
+        background-color: #edf2ff;
+      }
+      
+      .pagination .page-item.disabled .page-link {
+        color: #adb5bd;
+      }
+      
+      @media (max-width: 576px) {
+        .pagination .page-link {
+          width: 32px;
+          height: 32px;
+          font-size: 0.75rem;
+        }
+        
+        .pagination-info {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Preloader -->
+    <div class="preloader">
+      <div class="lds-ripple">
+        <div class="lds-pos"></div>
+        <div class="lds-pos"></div>
+      </div>
+    </div>
+    
+    <!-- Main wrapper -->
+    <div id="main-wrapper" data-navbarbg="skin6" data-theme="light" data-layout="vertical" data-sidebartype="full" data-boxed-layout="full">
+      
+      <!-- Topbar header -->
+      <header class="topbar" data-navbarbg="skin6">
+        <nav class="navbar top-navbar navbar-expand-md navbar-light">
+          <div class="navbar-header" data-logobg="skin5">
+            <!-- Mobile toggle -->
+            <a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)">
+              <i class="mdi mdi-menu ti-close"></i>
+            </a>
+            
+            <!-- Logo -->
+            <div class="navbar-brand">
+              <a href="/admin" class="logo">
+                <!-- Logo icon -->
+                <b class="logo-icon">
+                  <i class="mdi mdi-feather" style="color: white; font-size: 24px;"></i>
+                </b>
+                <!-- Logo text -->
+                <span class="logo-text">
+                  <span style="color: white; font-size: 18px; font-weight: 500;">博客管理系统</span>
+                </span>
+              </a>
+            </div>
+          </div>
+          
+          <!-- Navbar -->
+          <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin6">
+            <ul class="navbar-nav float-start me-auto"></ul>
+            <ul class="navbar-nav float-end">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-muted waves-effect waves-dark pro-pic" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  {{if user.avatar}}
+                  <img src="{{user.avatar}}" alt="user" class="rounded-circle" width="31">
+                  {{else}}
+                  <img src="/admin/css/icons/user.jpg" alt="user" class="rounded-circle" width="31">
+                  {{/if}}
+                  <span class="ms-2 d-none d-lg-inline-block">
+                    <span class="text-dark">{{user.username}}</span>
+                  </span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end user-dd animated" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="/admin/settings?tab=profile">
+                    <i class="mdi mdi-account-circle m-r-5 m-l-5"></i> 个人设置
+                  </a>
+                  <a class="dropdown-item" href="/" target="_blank">
+                    <i class="mdi mdi-home m-r-5 m-l-5"></i> 访问前台
+                  </a>
+                  <a class="dropdown-item" href="/admin/logout">
+                    <i class="mdi mdi-logout m-r-5 m-l-5"></i> 退出登录
+                  </a>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </header>
+      
+      <!-- Left Sidebar -->
+      <aside class="left-sidebar" data-sidebarbg="skin5">
+        <!-- Sidebar scroll-->
+        <div class="scroll-sidebar">
+          <!-- Sidebar navigation-->
+          <nav class="sidebar-nav">
+            <ul id="sidebarnav">
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link {{currentPath === '/admin' ? 'active' : ''}}" href="/admin" aria-expanded="false">
+                  <i class="mdi mdi-view-dashboard"></i>
+                  <span class="hide-menu">控制面板</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link {{currentPath.startsWith('/admin/posts') ? 'active' : ''}}" href="/admin/posts" aria-expanded="false">
+                  <i class="mdi mdi-file-document"></i>
+                  <span class="hide-menu">文章管理</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link {{currentPath.startsWith('/admin/categories') ? 'active' : ''}}" href="/admin/categories" aria-expanded="false">
+                  <i class="mdi mdi-folder"></i>
+                  <span class="hide-menu">分类管理</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link {{currentPath.startsWith('/admin/resources') ? 'active' : ''}}" href="/admin/resources" aria-expanded="false">
+                  <i class="mdi mdi-image-multiple"></i>
+                  <span class="hide-menu">资源管理</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link {{currentPath.startsWith('/admin/navigation') ? 'active' : ''}}" href="/admin/navigation" aria-expanded="false">
+                  <i class="mdi mdi-menu"></i>
+                  <span class="hide-menu">导航管理</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link {{currentPath.startsWith('/admin/settings') ? 'active' : ''}}" href="/admin/settings" aria-expanded="false">
+                  <i class="mdi mdi-settings"></i>
+                  <span class="hide-menu">高级设置</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <!-- End Sidebar navigation -->
+        </div>
+        <!-- End Sidebar scroll-->
+      </aside>
+      
+      <!-- Page wrapper -->
+      <div class="page-wrapper">
+        <!-- Bread crumb -->
+        {{block 'breadcrumb'}}{{/block}}
+        
+        <!-- Container fluid -->
+        <div class="container-fluid">
+          <!-- Content -->
+          {{block 'content'}}{{/block}}
+        </div>
+        
+        <!-- Footer -->
+        <footer class="footer text-center">
+          EasyKoa2 © Ono Naoki <span id="currentYear"></span> | Designed with <i class="mdi mdi-heart text-danger"></i>
+        </footer>
+      </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="/admin/js/jquery.min.js"></script>
+    <script src="/admin/js/bootstrap.bundle.min.js"></script>
+    <script src="/admin/js/sidebarmenu.js"></script>
+    <script src="/admin/js/waves.js"></script>
+    <script src="/admin/js/custom.js"></script>
+    
+    {{block 'scripts'}}{{/block}}
+    <script>
+      document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html> 

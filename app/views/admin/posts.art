@@ -1,0 +1,370 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">
+          <i class="mdi mdi-file-document"></i> 文章管理
+        </h3>
+        
+        <div>
+          <a href="/admin/posts/new" class="btn btn-primary">
+            <i class="mdi mdi-plus"></i> 写文章
+          </a>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        {{if posts && posts.length > 0}}
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>分类</th>
+                <th>发布时间</th>
+                <th>阅读数</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{each posts}}
+              <tr>
+                <td>
+                  <a href="/post/{{$value.id}}" target="_blank" style="color: var(--primary-color);">{{$value.title}}</a>
+                </td>
+                <td>{{$value.category_name || '未分类'}}</td>
+                <td>{{$value.created_at}}</td>
+                <td>{{$value.views}}</td>
+                <td>
+                  {{if $value.is_published}}
+                  <span class="badge bg-success">已发布</span>
+                  {{else}}
+                  <span class="badge bg-secondary">草稿</span>
+                  {{/if}}
+                </td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <a href="/admin/posts/edit/{{$value.id}}" class="btn btn-primary btn-sm text-white">
+                      编辑
+                    </a>
+                    {{if $value.is_published}}
+                    <button class="btn btn-warning btn-sm toggle-status text-dark" data-id="{{$value.id}}" data-status="0" title="将状态修改为草稿">
+                      禁用
+                    </button>
+                    {{else}}
+                    <button class="btn btn-success btn-sm toggle-status text-white" data-id="{{$value.id}}" data-status="1" title="发布此文章">
+                      发布
+                    </button>
+                    {{/if}}
+                    <button class="btn {{$value.is_top ? 'btn-info' : 'btn-secondary'}} btn-sm toggle-top text-white" 
+                            data-id="{{$value.id}}" 
+                            data-top="{{$value.is_top ? 'true' : 'false'}}"
+                            title="{{$value.is_top ? '取消置顶' : '置顶文章'}}">
+                      {{$value.is_top ? '已置顶' : '置顶'}}
+                    </button>
+                    <button class="btn btn-danger btn-sm delete-post text-white" data-id="{{$value.id}}">
+                      删除
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        
+        {{if pagination && pagination.total > 1}}
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div class="pagination-info">
+            共 {{pagination.total}} 页，当前第 {{pagination.current}} 页
+          </div>
+          <ul class="pagination">
+            <!-- 首页按钮 -->
+            {{if pagination.current > 1}}
+            <li class="page-item">
+              <a class="page-link" href="/admin/posts?page=1" title="首页">
+                <i class="mdi mdi-chevron-double-left"></i>
+              </a>
+            </li>
+            {{else}}
+            <li class="page-item disabled">
+              <span class="page-link">
+                <i class="mdi mdi-chevron-double-left"></i>
+              </span>
+            </li>
+            {{/if}}
+            
+            <!-- 上一页按钮 -->
+            {{if pagination.current > 1}}
+            <li class="page-item">
+              <a class="page-link" href="/admin/posts?page={{pagination.current - 1}}" title="上一页">
+                <i class="mdi mdi-chevron-left"></i>
+              </a>
+            </li>
+            {{else}}
+            <li class="page-item disabled">
+              <span class="page-link">
+                <i class="mdi mdi-chevron-left"></i>
+              </span>
+            </li>
+            {{/if}}
+            
+            <!-- 页码按钮 -->
+            {{each pagination.pageNumbers}}
+            <li class="page-item {{$value === pagination.current ? 'active' : ''}}">
+              <a class="page-link" href="/admin/posts?page={{$value}}">{{$value}}</a>
+            </li>
+            {{/each}}
+            
+            <!-- 下一页按钮 -->
+            {{if pagination.current < pagination.total}}
+            <li class="page-item">
+              <a class="page-link" href="/admin/posts?page={{pagination.current + 1}}" title="下一页">
+                <i class="mdi mdi-chevron-right"></i>
+              </a>
+            </li>
+            {{else}}
+            <li class="page-item disabled">
+              <span class="page-link">
+                <i class="mdi mdi-chevron-right"></i>
+              </span>
+            </li>
+            {{/if}}
+            
+            <!-- 末页按钮 -->
+            {{if pagination.current < pagination.total}}
+            <li class="page-item">
+              <a class="page-link" href="/admin/posts?page={{pagination.total}}" title="末页">
+                <i class="mdi mdi-chevron-double-right"></i>
+              </a>
+            </li>
+            {{else}}
+            <li class="page-item disabled">
+              <span class="page-link">
+                <i class="mdi mdi-chevron-double-right"></i>
+              </span>
+            </li>
+            {{/if}}
+          </ul>
+        </div>
+        {{/if}}
+        {{else}}
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="mdi mdi-information-outline me-2" style="font-size: 20px;"></i>
+          <p class="mb-0">还没有发布任何文章。</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 确认删除的模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">删除文章</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex">
+          <i class="mdi mdi-alert text-warning me-2" style="font-size: 24px;"></i>
+          <p class="mb-0">确定要删除这篇文章吗？此操作不可撤销。</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger text-white" id="confirmDelete">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'scripts'}}
+<script>
+  $(document).ready(function() {
+    let postIdToDelete = null;
+    
+    // 点击删除按钮
+    $('.delete-post').on('click', function() {
+      postIdToDelete = $(this).data('id');
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+      deleteModal.show();
+    });
+    
+    // 确认删除
+    $('#confirmDelete').on('click', function() {
+      if (postIdToDelete) {
+        const $btn = $(this);
+        
+        $.ajax({
+          url: '/admin/posts/delete/' + postIdToDelete,
+          type: 'POST',
+          beforeSend: function() {
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 删除中...');
+          },
+          success: function(response) {
+            if (response.success) {
+              window.location.reload();
+            } else {
+              alert('删除失败：' + response.error);
+            }
+          },
+          error: function() {
+            alert('删除请求失败，请重试');
+          },
+          complete: function() {
+            $btn.prop('disabled', false).html('删除');
+          }
+        });
+      }
+    });
+    
+    // 点击状态切换按钮
+    $('.toggle-status').on('click', function() {
+      const $btn = $(this);
+      const postId = $btn.data('id');
+      const newStatus = $btn.data('status');
+      
+      // 显示加载状态
+      const originalHtml = $btn.html();
+      $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 处理中...');
+      
+      // 发送请求切换状态
+      $.ajax({
+        url: '/admin/posts/status/' + postId,
+        type: 'POST',
+        data: { status: newStatus },
+        success: function(response) {
+          if (response.success) {
+            // 状态切换成功，刷新页面显示最新状态
+            window.location.reload();
+          } else {
+            // 使用Bootstrap的模态框显示更友好的错误消息
+            const errorMessage = response.error || '未知错误';
+            
+            // 创建模态框HTML
+            const modalHtml = `
+              <div class="modal fade" id="statusErrorModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">操作失败</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="d-flex">
+                        <i class="mdi mdi-alert text-warning me-2" style="font-size: 24px;"></i>
+                        <p class="mb-0">${errorMessage}</p>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            // 添加到文档中并显示
+            $('body').append(modalHtml);
+            const errorModal = new bootstrap.Modal(document.getElementById('statusErrorModal'));
+            errorModal.show();
+            
+            // 模态框关闭时从DOM中移除
+            $('#statusErrorModal').on('hidden.bs.modal', function() {
+              $(this).remove();
+            });
+            
+            $btn.prop('disabled', false).html(originalHtml);
+          }
+        },
+        error: function(xhr) {
+          const errorMessage = xhr.responseJSON?.error || '请求失败，请重试';
+          
+          // 显示错误提示
+          alert('状态切换失败: ' + errorMessage);
+          $btn.prop('disabled', false).html(originalHtml);
+        }
+      });
+    });
+
+    // 点击置顶切换按钮
+    $('.toggle-top').on('click', function() {
+      const $btn = $(this);
+      const postId = $btn.data('id');
+      // 确保将数值或字符串转换为布尔值
+      const currentTop = $btn.data('top') === true || $btn.data('top') === 'true' || $btn.data('top') === 1 || $btn.data('top') === '1';
+      const newTop = !currentTop;
+      
+      // 显示加载状态
+      const originalHtml = $btn.html();
+      $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 处理中...');
+      
+      // 发送请求切换置顶状态
+      $.ajax({
+        url: '/admin/posts/top/' + postId,
+        type: 'POST',
+        data: { isTop: newTop },
+        success: function(response) {
+          if (response.success) {
+            // 置顶状态切换成功，刷新页面显示最新状态
+            window.location.reload();
+          } else {
+            // 使用Bootstrap的模态框显示更友好的错误消息
+            const errorMessage = response.error || '未知错误';
+            
+            // 创建模态框HTML
+            const modalHtml = `
+              <div class="modal fade" id="topErrorModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">操作失败</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="d-flex">
+                        <i class="mdi mdi-alert text-warning me-2" style="font-size: 24px;"></i>
+                        <p class="mb-0">${errorMessage}</p>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            // 添加到文档中并显示
+            $('body').append(modalHtml);
+            const errorModal = new bootstrap.Modal(document.getElementById('topErrorModal'));
+            errorModal.show();
+            
+            // 模态框关闭时从DOM中移除
+            $('#topErrorModal').on('hidden.bs.modal', function() {
+              $(this).remove();
+            });
+            
+            $btn.prop('disabled', false).html(originalHtml);
+          }
+        },
+        error: function(xhr) {
+          const errorMessage = xhr.responseJSON?.error || '请求失败，请重试';
+          
+          // 显示错误提示
+          alert('置顶状态切换失败: ' + errorMessage);
+          $btn.prop('disabled', false).html(originalHtml);
+        }
+      });
+    });
+  });
+</script>
+{{/block}} 

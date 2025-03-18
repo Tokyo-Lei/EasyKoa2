@@ -1,0 +1,573 @@
+/* Kode Admin Dashboard Template 样式 */
+:root {
+  --primary-color: #4a6cf7;
+  --secondary-color: #6c757d;
+  --success-color: #219653;
+  --danger-color: #d50100;
+  --warning-color: #fb8500;
+  --info-color: #2f80ed;
+  --dark-color: #1e293b;
+  --light-color: #f8f9fa;
+  --body-bg: #f1f5f9;
+  --card-bg: #ffffff;
+  --sidebar-bg: #1e293b;
+  --sidebar-color: #e2e8f0;
+  --navbar-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --text-color: #334155;
+  --text-muted: #64748b;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  background-color: var(--body-bg);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* 登录页面样式 */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #4a6cf7 0%, #1e293b 100%);
+}
+
+.login-container .ui.segment {
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  border: none;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.login-container .ui.header {
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+}
+
+.login-container .ui.button {
+  background-color: var(--primary-color);
+  margin-top: 1.5rem;
+}
+
+/* 主布局样式 */
+.kode-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 260px;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-color);
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.kode-sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kode-sidebar-header .logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kode-sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.kode-sidebar-menu li {
+  margin: 0;
+  padding: 0;
+}
+
+.kode-sidebar-menu a {
+  display: block;
+  padding: 12px 20px;
+  color: var(--sidebar-color);
+  text-decoration: none;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kode-sidebar-menu a:hover, 
+.kode-sidebar-menu a.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.kode-sidebar-menu a i {
+  width: 24px;
+  text-align: center;
+}
+
+.kode-sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 主内容区域 */
+.kode-content {
+  margin-left: 260px;
+  padding: 70px 20px 20px;
+  transition: all 0.3s ease;
+}
+
+.kode-navbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 260px;
+  height: 60px;
+  background-color: var(--navbar-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 99;
+  transition: all 0.3s ease;
+}
+
+.kode-navbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 卡片组件 */
+.kode-card {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.kode-card-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kode-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.kode-card-body {
+  padding: 20px;
+}
+
+/* 网格布局 */
+.kode-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -12px;
+}
+
+.kode-col {
+  padding: 0 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.kode-col-4 {
+  flex: 0 0 33.333333%;
+  max-width: 33.333333%;
+  padding: 0 12px;
+}
+
+.kode-col-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+  padding: 0 12px;
+}
+
+.kode-col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+  padding: 0 12px;
+}
+
+/* 统计卡片 */
+.kode-stat-card {
+  display: flex;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.kode-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-right: 15px;
+  font-size: 24px;
+  color: #fff;
+}
+
+.kode-stat-info h3 {
+  margin: 0 0 5px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.kode-stat-info p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.bg-primary { background-color: var(--primary-color); }
+.bg-success { background-color: var(--success-color); }
+.bg-warning { background-color: var(--warning-color); }
+
+/* 表格样式 */
+.kode-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.kode-table th {
+  padding: 12px 15px;
+  text-align: left;
+  color: var(--text-color);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.kode-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.kode-table tr:last-child td {
+  border-bottom: none;
+}
+
+.kode-table tr:hover {
+  background-color: rgba(0,0,0,0.02);
+}
+
+/* 按钮样式 */
+.kode-btn {
+  display: inline-block;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.kode-btn-primary {
+  color: #fff;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.kode-btn-primary:hover {
+  background-color: #3a5ad9;
+  border-color: #3a5ad9;
+}
+
+.kode-btn-danger {
+  color: #fff;
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.kode-btn-danger:hover {
+  background-color: #c20000;
+  border-color: #c20000;
+}
+
+.kode-btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 12px;
+}
+
+/* 表单样式 */
+.kode-form-group {
+  margin-bottom: 1rem;
+}
+
+.kode-form-label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.kode-form-control {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-color);
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.kode-form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(74, 108, 247, 0.25);
+  outline: 0;
+}
+
+textarea.kode-form-control {
+  min-height: 100px;
+}
+
+/* 分页样式 */
+.kode-pagination {
+  display: flex;
+  padding-left: 0;
+  list-style: none;
+  border-radius: 0.25rem;
+}
+
+.kode-pagination li {
+  margin: 0 2px;
+}
+
+.kode-pagination a {
+  position: relative;
+  display: block;
+  padding: 0.5rem 0.75rem;
+  line-height: 1.25;
+  color: var(--primary-color);
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.kode-pagination a:hover {
+  z-index: 2;
+  color: var(--primary-color);
+  text-decoration: none;
+  background-color: var(--light-color);
+  border-color: var(--border-color);
+}
+
+.kode-pagination .active a {
+  z-index: 1;
+  color: #fff;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+  .kode-sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .kode-content,
+  .kode-navbar {
+    margin-left: 0;
+    left: 0;
+  }
+  
+  .sidebar-open .kode-sidebar {
+    transform: translateX(0);
+  }
+  
+  .sidebar-open .kode-content,
+  .sidebar-open .kode-navbar {
+    margin-left: 260px;
+  }
+  
+  .kode-col-4, .kode-col-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* SimpleMDE编辑器自定义样式 */
+.editor-toolbar {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-color: var(--border-color);
+}
+
+.CodeMirror {
+  border-color: var(--border-color);
+  height: 300px !important;
+}
+
+.editor-statusbar {
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  padding: 8px;
+}
+
+/* 移动菜单按钮 */
+.kode-menu-toggle {
+  display: none;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+@media (max-width: 992px) {
+  .kode-menu-toggle {
+    display: block;
+  }
+}
+
+/* 辅助类 */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.mb-4 { margin-bottom: 1.5rem; }
+.mt-4 { margin-top: 1.5rem; }
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.justify-content-between { justify-content: space-between; }
+
+/* 全局样式 */
+body {
+  background-color: #f8f9fa;
+}
+
+/* 侧边菜单 */
+.ui.left.fixed.vertical.menu {
+  width: 200px;
+  background-color: #1b1c1d;
+  color: #fff;
+}
+
+.ui.left.fixed.vertical.menu .header {
+  color: #fff;
+}
+
+/* 主内容区域 */
+.pusher {
+  margin-left: 200px;
+}
+
+.ui.main.container {
+  margin-top: 80px;
+  padding: 20px;
+}
+
+/* 固定顶部菜单 */
+.ui.fixed.menu {
+  background-color: #fff;
+  border-bottom: 1px solid rgba(34,36,38,.15);
+  box-shadow: 0 1px 2px 0 rgba(34,36,38,.15);
+}
+
+/* 卡片和表格样式 */
+.ui.segment {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ui.table {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 标签样式 */
+.ui.label {
+  margin: 0.25em;
+}
+
+/* 表单样式 */
+.ui.form {
+  margin-top: 1em;
+}
+
+/* 按钮样式 */
+.action-buttons .button {
+  margin-right: 0.5em;
+}
+
+/* 编辑器样式 */
+.editor-container {
+  margin-bottom: 1em;
+  border: 1px solid rgba(34,36,38,.15);
+  border-radius: 3px;
+}
+
+/* 分类树样式 */
+.category-tree {
+  padding-left: 0;
+  list-style-type: none;
+}
+
+.category-tree ul {
+  padding-left: 20px;
+  list-style-type: none;
+}
+
+.category-tree li {
+  margin: 5px 0;
+}
+
+.category-tree-item {
+  padding: 5px;
+  border-radius: 3px;
+}
+
+.category-tree-item:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* 统计卡片 */
+.stat-card {
+  text-align: center;
+}
+
+.stat-card .statistic {
+  margin: 0 auto;
+}
+
+/* 移动设备适配 */
+@media only screen and (max-width: 767px) {
+  .ui.left.fixed.vertical.menu {
+    display: none;
+  }
+  
+  .pusher {
+    margin-left: 0;
+  }
+  
+  .ui.main.container {
+    margin-top: 60px;
+  }
+} 

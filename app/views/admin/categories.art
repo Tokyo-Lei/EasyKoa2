@@ -1,0 +1,361 @@
+{{extend './layout.art'}}
+
+{{block 'breadcrumb'}}
+<div class="page-breadcrumb">
+  <div class="row">
+    <div class="col-5 align-self-center">
+      <h4 class="page-title">分类管理</h4>
+    </div>
+    <div class="col-7 align-self-center">
+      <div class="d-flex align-items-center justify-content-end">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="/admin">首页</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">分类管理</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'content'}}
+<div class="row">
+  <div class="col-lg-8 col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-4">
+          <h4 class="card-title mb-0">
+            <i class="mdi mdi-folder-multiple"></i> 分类列表
+          </h4>
+          <span class="ms-auto text-muted">共 {{categoryTree ? categoryTree.length : 0}} 个顶级分类</span>
+        </div>
+        
+        {{if categoryTree && categoryTree.length > 0}}
+        <div class="categories-container">
+          <ul class="categories-list mb-0">
+            {{each categoryTree}}
+            <li class="mb-3">
+              <div class="category-item d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                <div>
+                  <i class="mdi mdi-folder text-warning me-2"></i> 
+                  <span class="fw-medium">{{$value.name}}</span>
+                  {{if $value.children && $value.children.length > 0}}
+                  <span class="badge bg-primary ms-2">{{$value.children.length}}</span>
+                  {{/if}}
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-primary me-1 edit-category" data-id="{{$value.id}}" data-name="{{$value.name}}" data-parent="{{$value.parent_id}}" data-sort="{{$value.sort_order}}">
+                    <i class="mdi mdi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-category" data-id="{{$value.id}}">
+                    <i class="mdi mdi-delete"></i>
+                  </button>
+                </div>
+              </div>
+              
+              {{if $value.children && $value.children.length > 0}}
+              <ul class="categories-list ps-4 mt-2">
+                {{each $value.children}}
+                <li class="mb-2">
+                  <div class="category-item d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                    <div>
+                      <i class="mdi mdi-folder-open text-warning me-2"></i> {{$value.name}}
+                    </div>
+                    <div>
+                      <button class="btn btn-sm btn-outline-primary me-1 edit-category" data-id="{{$value.id}}" data-name="{{$value.name}}" data-parent="{{$value.parent_id}}" data-sort="{{$value.sort_order}}">
+                        <i class="mdi mdi-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger delete-category" data-id="{{$value.id}}">
+                        <i class="mdi mdi-delete"></i>
+                      </button>
+                    </div>
+                  </div>
+                </li>
+                {{/each}}
+              </ul>
+              {{/if}}
+            </li>
+            {{/each}}
+          </ul>
+        </div>
+        {{else}}
+        <div class="alert alert-info d-flex align-items-center">
+          <i class="mdi mdi-information-outline me-2" style="font-size: 20px;"></i> 
+          <span>暂无分类，请先添加分类。</span>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4 col-md-12">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title mb-4" id="categoryFormTitle">
+          <i class="mdi mdi-plus-circle"></i> 添加分类
+        </h4>
+        
+        <form id="categoryForm">
+          <input type="hidden" name="id" id="categoryId">
+          
+          <div class="mb-3">
+            <label class="form-label">分类名称</label>
+            <input type="text" class="form-control" name="name" placeholder="输入分类名称" id="categoryName">
+            <div class="form-text">分类名称应简洁明了，便于用户理解</div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">父级分类</label>
+            <select class="form-select" name="parentId" id="categoryParent">
+              <option value="0">无 (顶级分类)</option>
+              {{each categoryTree}}
+              <option value="{{$value.id}}">{{$value.name}}</option>
+              {{/each}}
+            </select>
+            <div class="form-text">选择上级分类，不选则为顶级分类</div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">排序值</label>
+            <input type="number" class="form-control" name="sortOrder" placeholder="数字越小排序越靠前" id="categorySortOrder" min="0" value="0">
+            <div class="form-text">影响分类在列表中的显示顺序，数字越小排序越靠前</div>
+          </div>
+          
+          <div class="alert alert-danger mt-3" id="formError" style="display: none;"></div>
+          
+          <div class="d-flex mt-4">
+            <button type="submit" class="btn btn-primary me-2">
+              <i class="mdi mdi-content-save me-1"></i> 保存
+            </button>
+            <button type="button" id="resetForm" class="btn btn-light">
+              <i class="mdi mdi-refresh me-1"></i> 重置
+            </button>
+          </div>
+        </form>
+        
+        <div class="mt-4 pt-3 border-top">
+          <h5 class="mb-3">分类管理说明</h5>
+          <div class="bg-light p-3 rounded">
+            <ul class="ps-3 mb-0">
+              <li>博客支持两级分类结构</li>
+              <li>删除父级分类会同时删除其下的所有子分类</li>
+              <li>分类删除后，相关文章不会被删除</li>
+              <li>分类名称建议不超过10个字符</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 确认删除的模态框 -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">删除分类</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex">
+          <i class="mdi mdi-alert text-warning me-2" style="font-size: 24px;"></i>
+          <p class="mb-0">确定要删除这个分类吗？此操作会同时删除其下的所有子分类，但不会删除相关文章。</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteCategory">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'scripts'}}
+<style>
+.categories-container {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.categories-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.categories-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+.categories-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.category-item {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: all 0.2s;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.category-item:hover {
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  border-color: #5f76e8;
+}
+</style>
+
+<script>
+  $(document).ready(function() {
+    // 编辑分类
+    $('.edit-category').on('click', function() {
+      const id = $(this).data('id');
+      const name = $(this).data('name');
+      const parentId = $(this).data('parent');
+      const sortOrder = $(this).data('sort');
+      
+      // 滚动到表单区域
+      $('html, body').animate({
+        scrollTop: $('#categoryForm').offset().top - 100
+      }, 500);
+      
+      $('#categoryFormTitle').html('<i class="mdi mdi-pencil"></i> 编辑分类');
+      $('#categoryId').val(id);
+      $('#categoryName').val(name);
+      $('#categoryParent').val(parentId);
+      $('#categorySortOrder').val(sortOrder);
+      
+      // 为表单添加编辑中的标识
+      $('#categoryForm').addClass('editing');
+      $('.card:has(#categoryForm)').addClass('border-primary');
+    });
+    
+    // 重置表单
+    $('#resetForm').on('click', function() {
+      $('#categoryFormTitle').html('<i class="mdi mdi-plus-circle"></i> 添加分类');
+      $('#categoryForm')[0].reset();
+      $('#categoryId').val('');
+      $('#categoryParent').val('0');
+      $('#formError').hide();
+      
+      // 移除编辑中的标识
+      $('#categoryForm').removeClass('editing');
+      $('.card:has(#categoryForm)').removeClass('border-primary');
+    });
+    
+    // 删除分类
+    let categoryIdToDelete = null;
+    $('.delete-category').on('click', function() {
+      categoryIdToDelete = $(this).data('id');
+      const deleteModal = new bootstrap.Modal(document.getElementById('deleteCategoryModal'));
+      deleteModal.show();
+    });
+    
+    // 确认删除分类
+    $('#confirmDeleteCategory').on('click', function() {
+      if (categoryIdToDelete) {
+        const $btn = $(this);
+        
+        $.ajax({
+          url: '/admin/categories/delete/' + categoryIdToDelete,
+          type: 'POST',
+          beforeSend: function() {
+            $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 删除中...');
+          },
+          success: function(response) {
+            if (response.success) {
+              window.location.reload();
+            } else {
+              alert('删除失败：' + response.error);
+            }
+          },
+          error: function() {
+            alert('删除请求失败，请重试');
+          },
+          complete: function() {
+            $btn.prop('disabled', false).html('删除');
+          }
+        });
+      }
+    });
+    
+    // 表单提交
+    $('#categoryForm').on('submit', function(event) {
+      event.preventDefault();
+      
+      // 基本验证
+      const name = $('#categoryName').val().trim();
+      if (!name) {
+        $('#formError').text('分类名称不能为空').show();
+        $('#categoryName').focus();
+        return false;
+      }
+      
+      if (name.length > 20) {
+        $('#formError').text('分类名称过长，不应超过20个字符').show();
+        $('#categoryName').focus();
+        return false;
+      }
+      
+      const formData = $(this).serialize();
+      const id = $('#categoryId').val();
+      const url = id 
+        ? '/admin/categories/save/' + id 
+        : '/admin/categories/save';
+      
+      const $submitBtn = $('button[type="submit"]');
+        
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: formData,
+        beforeSend: function() {
+          $submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> 保存中...');
+          $('#formError').hide();
+        },
+        success: function(response) {
+          if (response.success) {
+            // 显示成功提示，然后刷新页面
+            const isEditing = $('#categoryForm').hasClass('editing');
+            const message = isEditing ? '分类更新成功！' : '分类添加成功！';
+            
+            const successAlert = $('<div class="alert alert-success">').html(
+              '<i class="mdi mdi-check-circle me-2"></i>' + message
+            ).css('position', 'fixed')
+              .css('top', '20px')
+              .css('right', '20px')
+              .css('z-index', '9999')
+              .css('box-shadow', '0 5px 15px rgba(0,0,0,0.2)');
+            
+            $('body').append(successAlert);
+            
+            setTimeout(function() {
+              successAlert.fadeOut(300, function() {
+                $(this).remove();
+                window.location.reload();
+              });
+            }, 1000);
+          } else {
+            $('#formError').text(response.error || '保存失败').show();
+          }
+        },
+        error: function(xhr) {
+          let errorMessage = '请求失败，请重试';
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = xhr.responseJSON.error;
+          }
+          $('#formError').text(errorMessage).show();
+        },
+        complete: function() {
+          $submitBtn.prop('disabled', false).html('<i class="mdi mdi-content-save me-1"></i> 保存');
+        }
+      });
+    });
+  });
+</script>
+{{/block}} 

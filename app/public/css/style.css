@@ -1,0 +1,93 @@
+/* 全局样式 */
+body {
+  padding: 20px 0;
+  background-color: #f8f9fa;
+}
+
+.ui.container {
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 5px;
+}
+
+/* 主菜单 */
+.ui.secondary.pointing.menu {
+  margin-bottom: 2em;
+  border-bottom: 2px solid rgba(34,36,38,.15);
+}
+
+.ui.secondary.pointing.menu .active.item {
+  border-color: #2185d0;
+}
+
+/* 文章列表 */
+.post-item {
+  margin-bottom: 2em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid rgba(34,36,38,.1);
+}
+
+.post-item:last-child {
+  border-bottom: none;
+}
+
+.post-item .header {
+  margin-bottom: 0.5em;
+}
+
+.post-meta {
+  color: rgba(0,0,0,.4);
+  margin-bottom: 1em;
+}
+
+.post-excerpt {
+  margin-bottom: 1em;
+}
+
+.post-tags {
+  margin-top: 0.5em;
+}
+
+/* 文章详情页 */
+.post-content {
+  line-height: 1.8;
+  font-size: 16px;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+}
+
+.post-content pre {
+  background-color: #f6f8fa;
+  padding: 16px;
+  border-radius: 3px;
+  overflow: auto;
+}
+
+/* 分页 */
+.pagination-container {
+  margin-top: 2em;
+  text-align: center;
+}
+
+/* 移动设备适配 */
+@media only screen and (max-width: 767px) {
+  .ui.container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+} 

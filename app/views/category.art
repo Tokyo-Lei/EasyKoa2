@@ -1,0 +1,71 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<h1 class="ui header">
+  分类：{{category.name}}
+  <div class="sub header">当前分类下的文章</div>
+</h1>
+
+<div class="ui divider"></div>
+
+{{if posts && posts.length > 0}}
+  {{each posts}}
+  <div class="post-item">
+    <h2 class="ui header">
+      <a href="{{$value.articleUrl}}">{{$value.title}}</a>
+    </h2>
+    
+    <div class="post-meta">
+      <span><i class="calendar icon"></i> {{$value.created_at}}</span>
+      <span> · <i class="eye icon"></i> {{$value.views}} 次阅读</span>
+    </div>
+    
+    <div class="post-excerpt">
+      {{$value.excerpt}}
+    </div>
+    
+    {{if $value.tags && $value.tags.length > 0}}
+    <div class="post-tags">
+      <i class="tags icon"></i>
+      {{each $value.tags}}
+      <a href="/tag/{{$value.name}}" class="ui small label">{{$value.name}}</a>
+      {{/each}}
+    </div>
+    {{/if}}
+    
+    <div class="post-read-more">
+      <a href="{{$value.articleUrl}}" class="ui small basic button">阅读全文</a>
+    </div>
+  </div>
+  {{/each}}
+  
+  {{if pagination && pagination.total > 1}}
+  <div class="pagination-container">
+    <div class="ui pagination menu">
+      {{if pagination.current > 1}}
+      <a href="/category/{{category.id}}?page={{pagination.current - 1}}" class="item">
+        <i class="angle left icon"></i> 上一页
+      </a>
+      {{/if}}
+      
+      {{each pagination.pageNumbers}}
+      <a href="/category/{{category.id}}?page={{$value}}" class="item {{$value === pagination.current ? 'active' : ''}}">
+        {{$value}}
+      </a>
+      {{/each}}
+      
+      {{if pagination.current < pagination.total}}
+      <a href="/category/{{category.id}}?page={{pagination.current + 1}}" class="item">
+        下一页 <i class="angle right icon"></i>
+      </a>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+{{else}}
+  <div class="ui message">
+    <div class="header">暂无文章</div>
+    <p>该分类下还没有发布任何文章。</p>
+  </div>
+{{/if}}
+{{/block}} 
