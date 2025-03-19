@@ -802,6 +802,407 @@ async function saveUpload(ctx) {
   }
 }
 
+/**
+ * 优化数据库
+ */
+async function optimizeDatabase(ctx) {
+  try {
+    // 获取数据库文件路径
+    const path = require('path');
+    const fs = require('fs');
+    
+    // 从配置文件获取数据库路径
+    const config = require('../../../config/config');
+    let dbPath = config.database && config.database.path 
+      ? path.resolve(config.database.path)
+      : path.join(__dirname, '../../../data/database.db');
+    
+    console.log('数据库路径:', dbPath);
+    
+    // 检查数据库文件是否存在
+    if (!fs.existsSync(dbPath)) {
+      console.error('数据库文件不存在:', dbPath);
+      // 尝试在其他可能的路径寻找数据库文件
+      const alternativePaths = [
+        path.join(__dirname, '../../../data/blog.db'),
+        path.join(__dirname, '../../../blog.db'),
+        path.join(__dirname, '../../../database.db')
+      ];
+      
+      let foundPath = null;
+      for (const altPath of alternativePaths) {
+        if (fs.existsSync(altPath)) {
+          console.log('找到替代数据库路径:', altPath);
+          foundPath = altPath;
+          break;
+        }
+      }
+      
+      if (!foundPath) {
+        ctx.status = 404;
+        ctx.body = {
+          success: false,
+          error: '数据库文件不存在'
+        };
+        return;
+      }
+      
+      // 使用找到的替代路径
+      dbPath = foundPath;
+    }
+    
+    // 使用sqlite3执行VACUUM命令优化数据库
+    const sqlite3 = require('sqlite3').verbose();
+    const db = new sqlite3.Database(dbPath);
+    
+    await new Promise((resolve, reject) => {
+      db.exec('VACUUM', (err) => {
+        if (err) {
+          console.error('数据库优化失败:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+    
+    // 关闭数据库连接
+    db.close();
+    
+    ctx.body = {
+      success: true,
+      message: '数据库优化完成'
+    };
+  } catch (error) {
+    console.error('数据库优化失败:', error);
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: '数据库优化失败: ' + error.message
+    };
+  }
+}
+
+/**
+ * 备份数据库
+ */
+async function backupDatabase(ctx) {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    
+    // 获取数据库路径
+    const config = require('../../../config/config');
+    let dbPath = config.database && config.database.path 
+      ? path.resolve(config.database.path)
+      : path.join(__dirname, '../../../data/database.db');
+    
+    console.log('数据库路径:', dbPath);
+    
+    // 检查数据库文件是否存在
+    if (!fs.existsSync(dbPath)) {
+      console.error('数据库文件不存在:', dbPath);
+      // 尝试在其他可能的路径寻找数据库文件
+      const alternativePaths = [
+        path.join(__dirname, '../../../data/blog.db'),
+        path.join(__dirname, '../../../blog.db'),
+        path.join(__dirname, '../../../database.db')
+      ];
+      
+      let foundPath = null;
+      for (const altPath of alternativePaths) {
+        if (fs.existsSync(altPath)) {
+          console.log('找到替代数据库路径:', altPath);
+          foundPath = altPath;
+          break;
+        }
+      }
+      
+      if (!foundPath) {
+        ctx.status = 404;
+        ctx.body = {
+          success: false,
+          error: '数据库文件不存在'
+        };
+        return;
+      }
+      
+      // 使用找到的替代路径
+      dbPath = foundPath;
+    }
+    
+    // 创建备份目录（如果不存在）
+    const backupDir = path.join(__dirname, '../../../data/backup');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    // 创建备份文件名，包含日期和时间
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}-${String(date.getMinutes()).padStart(2, '0')}`;
+    const backupPath = path.join(backupDir, `database_backup_${timestamp}.db`);
+    
+    // 复制数据库文件到备份目录
+    fs.copyFileSync(dbPath, backupPath);
+    
+    // 记录备份信息
+    await Setting.setValue('last_backup_time', Date.now().toString());
+    
+    // 清理旧备份文件（保留最近7个备份）
+    const backupRetention = parseInt(await Setting.getValue('backup_retention') || '7', 10);
+    const files = fs.readdirSync(backupDir)
+      .filter(file => file.startsWith('database_backup_') && file.endsWith('.db'))
+      .map(file => ({
+        name: file,
+        path: path.join(backupDir, file),
+        time: fs.statSync(path.join(backupDir, file)).mtime.getTime()
+      }))
+      .sort((a, b) => b.time - a.time); // 按时间降序排序
+    
+    // 删除超出保留数量的旧备份
+    if (files.length > backupRetention) {
+      for (let i = backupRetention; i < files.length; i++) {
+        fs.unlinkSync(files[i].path);
+      }
+    }
+    
+    ctx.body = {
+      success: true,
+      message: '数据库备份完成',
+      backupFile: path.basename(backupPath)
+    };
+  } catch (error) {
+    console.error('数据库备份失败:', error);
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: '数据库备份失败: ' + error.message
+    };
+  }
+}
+
+/**
+ * 恢复数据库
+ */
+async function restoreDatabase(ctx) {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    
+    // 获取数据库路径
+    const config = require('../../../config/config');
+    let dbPath = config.database && config.database.path 
+      ? path.resolve(config.database.path)
+      : path.join(__dirname, '../../../data/database.db');
+    
+    console.log('数据库路径:', dbPath);
+    
+    // 检查数据库文件是否存在
+    if (!fs.existsSync(dbPath)) {
+      console.error('数据库文件不存在:', dbPath);
+      // 尝试在其他可能的路径寻找数据库文件
+      const alternativePaths = [
+        path.join(__dirname, '../../../data/blog.db'),
+        path.join(__dirname, '../../../blog.db'),
+        path.join(__dirname, '../../../database.db')
+      ];
+      
+      let foundPath = null;
+      for (const altPath of alternativePaths) {
+        if (fs.existsSync(altPath)) {
+          console.log('找到替代数据库路径:', altPath);
+          foundPath = altPath;
+          break;
+        }
+      }
+      
+      if (!foundPath) {
+        ctx.status = 404;
+        ctx.body = {
+          success: false,
+          error: '数据库文件不存在'
+        };
+        return;
+      }
+      
+      // 使用找到的替代路径
+      dbPath = foundPath;
+    }
+    
+    // 获取上传的备份文件
+    console.log('请求文件: ', ctx.request.files);
+    const file = ctx.request.files && ctx.request.files.backup;
+    if (!file) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: '未提供备份文件'
+      };
+      return;
+    }
+    
+    // 在使用前检查file对象结构
+    console.log('文件对象: ', JSON.stringify(file));
+    
+    // 确定文件路径 - 兼容不同的文件上传中间件
+    let filePath = null;
+    if (file.path) {
+      filePath = file.path;
+    } else if (file.filepath) {
+      filePath = file.filepath;
+    } else if (file.tmpPath) {
+      filePath = file.tmpPath;
+    } else if (typeof file === 'string') {
+      filePath = file;
+    }
+    
+    if (!filePath) {
+      console.error('文件路径不存在，file对象：', file);
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: '无法获取上传的文件路径'
+      };
+      return;
+    }
+    
+    console.log('使用文件路径: ', filePath);
+    
+    // 验证是否是SQLite数据库文件 - 修改为更安全的验证方式
+    try {
+      const fd = fs.openSync(filePath, 'r');
+      const buffer = Buffer.alloc(16);
+      fs.readSync(fd, buffer, 0, 16, 0);
+      fs.closeSync(fd);
+      
+      const header = buffer.toString('utf8', 0, 16);
+      console.log('文件头信息: ', header);
+      
+      if (!header.includes('SQLite format')) {
+        // 删除临时文件
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.error('删除无效文件失败:', e);
+        }
+        
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          error: '上传的文件不是有效的SQLite数据库文件'
+        };
+        return;
+      }
+    } catch (err) {
+      console.error('验证数据库文件失败:', err);
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: '验证数据库文件失败: ' + err.message
+      };
+      return;
+    }
+    
+    // 备份当前数据库（以防万一）
+    const date = new Date();
+    const timestamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}-${String(date.getMinutes()).padStart(2, '0')}`;
+    const backupDir = path.join(__dirname, '../../../data/backup');
+    
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    const autoBackupPath = path.join(backupDir, `database_before_restore_${timestamp}.db`);
+    fs.copyFileSync(dbPath, autoBackupPath);
+    
+    // 复制上传的备份文件到数据库位置
+    fs.copyFileSync(filePath, dbPath);
+    
+    // 删除临时文件
+    try {
+      fs.unlinkSync(filePath);
+    } catch (e) {
+      console.error('删除临时文件失败:', e);
+    }
+    
+    // 更新恢复时间
+    await Setting.setValue('last_restore_time', Date.now().toString());
+    
+    ctx.body = {
+      success: true,
+      message: '数据库恢复完成'
+    };
+  } catch (error) {
+    console.error('数据库恢复失败:', error);
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: '数据库恢复失败: ' + error.message
+    };
+  }
+}
+
+/**
+ * 保存备份设置
+ */
+async function saveBackupSettings(ctx) {
+  try {
+    const { type, settings } = ctx.request.body;
+    
+    if (type !== 'backup') {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: '无效的设置类型'
+      };
+      return;
+    }
+    
+    // 解析设置
+    const enableAutoBackup = settings.enable_auto_backup === true || settings.enable_auto_backup === 'true';
+    const backupInterval = parseInt(settings.backup_interval, 10) || 24;
+    const backupRetention = parseInt(settings.backup_retention, 10) || 7;
+    
+    // 验证设置
+    if (backupInterval < 1 || backupInterval > 168) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: '备份间隔必须在1-168小时之间'
+      };
+      return;
+    }
+    
+    if (backupRetention < 1 || backupRetention > 30) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        error: '备份保留数量必须在1-30之间'
+      };
+      return;
+    }
+    
+    // 保存设置
+    await Setting.setMultiple({
+      enable_auto_backup: enableAutoBackup.toString(),
+      backup_interval: backupInterval.toString(),
+      backup_retention: backupRetention.toString()
+    });
+    
+    ctx.body = {
+      success: true,
+      message: '备份设置已保存'
+    };
+  } catch (error) {
+    console.error('保存备份设置失败:', error);
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      error: '保存备份设置失败: ' + error.message
+    };
+  }
+}
+
 module.exports = {
   index,
   saveBasic,
@@ -812,5 +1213,9 @@ module.exports = {
   uploadAvatar,
   updateUsername,
   updatePassword,
-  saveUpload
+  saveUpload,
+  optimizeDatabase,
+  backupDatabase,
+  restoreDatabase,
+  saveBackupSettings
 }; 

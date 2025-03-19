@@ -1,0 +1,143 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">单页管理</h3>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <a href="/admin/page/new" class="btn btn-primary">
+              <i class="fa fa-plus"></i> 新建单页
+            </a>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th style="width: 50px">ID</th>
+                  <th>标题</th>
+                  <th>别名</th>
+                  <th style="width: 100px">首页显示</th>
+                  <th style="width: 180px">创建时间</th>
+                  <th style="width: 150px">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{each pages}}
+                <tr>
+                  <td>{{$value.id}}</td>
+                  <td>{{$value.title}}</td>
+                  <td>{{$value.slug}}</td>
+                  <td>
+                    {{if $value.show_on_home}}
+                    <span class="badge badge-success">是</span>
+                    {{else}}
+                    <span class="badge badge-secondary">否</span>
+                    {{/if}}
+                  </td>
+                  <td>{{$value.created_at}}</td>
+                  <td>
+                    <a href="/admin/page/{{$value.id}}" class="btn btn-sm btn-info">
+                      <i class="fa fa-edit"></i> 编辑
+                    </a>
+                    <button class="btn btn-sm btn-danger delete-page" data-id="{{$value.id}}">
+                      <i class="fa fa-trash"></i> 删除
+                    </button>
+                  </td>
+                </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+          
+          {{if pagination.total > 1}}
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {{if pagination.current > 1}}
+              <li class="page-item">
+                <a class="page-link" href="?page={{pagination.current - 1}}">上一页</a>
+              </li>
+              {{/if}}
+              
+              {{for i = 1; i <= pagination.total; i++}}
+              <li class="page-item {{i === pagination.current ? 'active' : ''}}">
+                <a class="page-link" href="?page={{i}}">{{i}}</a>
+              </li>
+              {{/for}}
+              
+              {{if pagination.current < pagination.total}}
+              <li class="page-item">
+                <a class="page-link" href="?page={{pagination.current + 1}}">下一页</a>
+              </li>
+              {{/if}}
+            </ul>
+          </nav>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认对话框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">确认删除</h5>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        确定要删除这个单页吗？此操作不可恢复。
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">确定删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'script'}}
+<script>
+$(document).ready(function() {
+  let deleteId = null;
+  
+  // 删除按钮点击事件
+  $('.delete-page').click(function() {
+    deleteId = $(this).data('id');
+    $('#deleteModal').modal('show');
+  });
+  
+  // 确认删除
+  $('#confirmDelete').click(function() {
+    if (!deleteId) return;
+    
+    $.ajax({
+      url: '/admin/page/' + deleteId,
+      method: 'DELETE',
+      success: function(response) {
+        if (response.success) {
+          location.reload();
+        } else {
+          alert('删除失败：' + (response.error || '未知错误'));
+        }
+      },
+      error: function(xhr) {
+        alert('删除失败：' + (xhr.responseJSON?.error || '服务器错误'));
+      }
+    });
+    
+    $('#deleteModal').modal('hide');
+  });
+});
+</script>
+{{/block}} 

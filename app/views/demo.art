@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - {{settings.site_title}}</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      background-color: #fff;
+    }
+    .code-example {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      overflow-x: auto;
+    }
+    pre {
+      margin: 0;
+    }
+    .tag-item {
+      display: inline-block;
+      padding: 4px 8px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+      color: #333;
+      font-size: 14px;
+    }
+    .nav-pills .nav-link.active {
+      background-color: #6c757d;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <header class="bg-dark text-white py-3 mb-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">{{settings.site_title}}</h1>
+        <p class="mb-0">{{settings.site_subtitle}}</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-3 mb-4">
+        <div class="sticky-top" style="top: 20px;">
+          <div class="card">
+            <div class="card-header">数据调用示例导航</div>
+            <div class="card-body p-0">
+              <nav class="nav flex-column nav-pills">
+                <a class="nav-link active" href="#site-settings">站点设置</a>
+                <a class="nav-link" href="#user-info">用户信息</a>
+                <a class="nav-link" href="#categories">分类数据</a>
+                <a class="nav-link" href="#posts">文章数据</a>
+                <a class="nav-link" href="#pagination">分页功能</a>
+                <a class="nav-link" href="#tags">标签数据</a>
+                <a class="nav-link" href="#pages">单页数据</a>
+                <a class="nav-link" href="#post-detail">文章详情</a>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-9">
+        <!-- 站点设置 -->
+        <section id="site-settings" class="section">
+          <h2>1. 站点设置调用</h2>
+          <p>站点设置保存在数据库中，通过Setting模型获取。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取所有设置
+const settings = await Setting.getAll();
+const settingsMap = {};
+settings.forEach(setting => {
+  settingsMap[setting.key] = setting.value;
+});</code></pre>
+          </div>
+          
+          <h5>当前站点设置：</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>设置名称</th>
+                <th>设置值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>站点标题</td>
+                <td>{{settings.site_title}}</td>
+              </tr>
+              <tr>
+                <td>站点副标题</td>
+                <td>{{settings.site_subtitle}}</td>
+              </tr>
+              <tr>
+                <td>站点描述</td>
+                <td>{{settings.site_description}}</td>
+              </tr>
+              <tr>
+                <td>每页文章数</td>
+                <td>{{settings.articles_per_page}}</td>
+              </tr>
+              <tr>
+                <td>版权信息</td>
+                <td>{{settings.site_copyright}}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&lt;title&gt;&#123;&#123;title&#125;&#125; - &#123;&#123;settings.site_title&#125;&#125;&lt;/title&gt;
+&lt;meta name="description" content="&#123;&#123;settings.site_description&#125;&#125;"&gt;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 用户信息 -->
+        <section id="user-info" class="section">
+          <h2>2. 用户信息</h2>
+          <p>用户信息通过User模型获取。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取用户信息
+const adminUser = await User.findById(1);</code></pre>
+          </div>
+          
+          <div class="row align-items-center">
+            <div class="col-md-3">
+              {{if adminUser && adminUser.avatar}}
+              <img src="{{adminUser.avatar}}" alt="{{adminUser.username}}" class="img-fluid rounded-circle">
+              {{else}}
+              <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                <span class="h3">{{adminUser ? adminUser.username.charAt(0).toUpperCase() : 'A'}}</span>
+              </div>
+              {{/if}}
+            </div>
+            <div class="col-md-9">
+              <h5>管理员信息:</h5>
+              <ul class="list-unstyled">
+                <li><strong>用户名:</strong> {{adminUser.username}}</li>
+                <li><strong>Email:</strong> {{adminUser.email}}</li>
+                <li><strong>注册时间:</strong> {{adminUser.created_at}}</li>
+              </ul>
+            </div>
+          </div>
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&lt;img src="&#123;&#123;user.avatar&#125;&#125;" alt="&#123;&#123;user.username&#125;&#125;"&gt;
+&lt;span&gt;&#123;&#123;user.username&#125;&#125;&lt;/span&gt;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 分类数据 -->
+        <section id="categories" class="section">
+          <h2>3. 分类数据</h2>
+          <p>分类数据通过Category模型获取。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取所有分类
+const categories = await Category.getAll();</code></pre>
+          </div>
+          
+          <h5>当前分类列表:</h5>
+          <div class="row">
+            {{each categories category}}
+            <div class="col-md-4 mb-3">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">{{category.name}}</h5>
+                  <p class="card-text text-muted small">文章数: {{category.article_count || 0}}</p>
+                  <a href="/category/{{category.id}}" class="btn btn-sm btn-outline-secondary">查看分类</a>
+                </div>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&#123;&#123;each categories category&#125;&#125;
+  &lt;a href="/category/&#123;&#123;category.id&#125;&#125;"&gt;&#123;&#123;category.name&#125;&#125;&lt;/a&gt;
+&#123;&#123;/each&#125;&#125;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 文章数据 -->
+        <section id="posts" class="section">
+          <h2>4. 文章数据</h2>
+          <p>文章列表通过Post模型获取，支持分页查询。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取文章列表
+const { items: posts, total } = await Post.getList({ 
+  page: 1,
+  pageSize: 10,
+  publishedOnly: true
+});</code></pre>
+          </div>
+          
+          <h5>最新文章:</h5>
+          <div class="list-group mb-4">
+            {{each posts post}}
+            <a href="/post/{{post.id}}" class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-1">{{post.title}}</h5>
+                <small>{{post.created_at.substring(0, 10)}}</small>
+              </div>
+              <p class="mb-1">{{post.summary}}</p>
+            </a>
+            {{/each}}
+          </div>
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&#123;&#123;each posts post&#125;&#125;
+  &lt;article&gt;
+    &lt;h2&gt;&lt;a href="/post/&#123;&#123;post.id&#125;&#125;"&gt;&#123;&#123;post.title&#125;&#125;&lt;/a&gt;&lt;/h2&gt;
+    &lt;div class="meta"&gt;发布于: &#123;&#123;post.created_at&#125;&#125;&lt;/div&gt;
+    &lt;div class="summary"&gt;&#123;&#123;post.summary&#125;&#125;&lt;/div&gt;
+  &lt;/article&gt;
+&#123;&#123;/each&#125;&#125;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 分页功能 -->
+        <section id="pagination" class="section">
+          <h2>5. 分页功能</h2>
+          <p>分页数据根据查询结果生成，支持上一页、下一页和具体页码。</p>
+          
+          <div class="code-example">
+            <pre><code>// 生成分页数据
+const totalPages = Math.ceil(total / limit);
+const pagination = {
+  current: page,
+  total: totalPages,
+  hasNext: page < totalPages,
+  hasPrev: page > 1,
+  nextPage: page < totalPages ? page + 1 : null,
+  prevPage: page > 1 ? page - 1 : null,
+  pageNumbers: []
+};</code></pre>
+          </div>
+          
+          <h5>分页示例:</h5>
+          <nav aria-label="Page navigation">
+            <ul class="pagination">
+              {{if pagination.hasPrev}}
+              <li class="page-item">
+                <a class="page-link" href="?page={{pagination.prevPage}}" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              {{else}}
+              <li class="page-item disabled">
+                <span class="page-link">&laquo;</span>
+              </li>
+              {{/if}}
+              
+              {{each pagination.pageNumbers pageNum}}
+              <li class="page-item {{pageNum === pagination.current ? 'active' : ''}}">
+                <a class="page-link" href="?page={{pageNum}}">{{pageNum}}</a>
+              </li>
+              {{/each}}
+              
+              {{if pagination.hasNext}}
+              <li class="page-item">
+                <a class="page-link" href="?page={{pagination.nextPage}}" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+              {{else}}
+              <li class="page-item disabled">
+                <span class="page-link">&raquo;</span>
+              </li>
+              {{/if}}
+            </ul>
+          </nav>
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&lt;nav aria-label="Page navigation"&gt;
+  &lt;ul class="pagination"&gt;
+    &#123;&#123;if pagination.hasPrev&#125;&#125;
+    &lt;li class="page-item"&gt;
+      &lt;a class="page-link" href="?page=&#123;&#123;pagination.prevPage&#125;&#125;"&gt;上一页&lt;/a&gt;
+    &lt;/li&gt;
+    &#123;&#123;else&#125;&#125;
+    &lt;li class="page-item disabled"&gt;
+      &lt;span class="page-link"&gt;上一页&lt;/span&gt;
+    &lt;/li&gt;
+    &#123;&#123;/if&#125;&#125;
+    
+    &#123;&#123;each pagination.pageNumbers pageNum&#125;&#125;
+    &lt;li class="page-item &#123;&#123;pageNum === pagination.current ? 'active' : ''&#125;&#125;"&gt;
+      &lt;a class="page-link" href="?page=&#123;&#123;pageNum&#125;&#125;"&gt;&#123;&#123;pageNum&#125;&#125;&lt;/a&gt;
+    &lt;/li&gt;
+    &#123;&#123;/each&#125;&#125;
+    
+    &#123;&#123;if pagination.hasNext&#125;&#125;
+    &lt;li class="page-item"&gt;
+      &lt;a class="page-link" href="?page=&#123;&#123;pagination.nextPage&#125;&#125;"&gt;下一页&lt;/a&gt;
+    &lt;/li&gt;
+    &#123;&#123;else&#125;&#125;
+    &lt;li class="page-item disabled"&gt;
+      &lt;span class="page-link"&gt;下一页&lt;/span&gt;
+    &lt;/li&gt;
+    &#123;&#123;/if&#125;&#125;
+  &lt;/ul&gt;
+&lt;/nav&gt;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 标签数据 -->
+        <section id="tags" class="section">
+          <h2>6. 标签数据</h2>
+          <p>标签数据通过Tag模型获取。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取所有标签
+const tags = await Tag.getAll();</code></pre>
+          </div>
+          
+          <h5>标签云:</h5>
+          <div class="mb-4">
+            {{if tags && tags.length}}
+              {{each tags tag}}
+                {{if tag && tag.id}}
+                <a href="/tag/{{tag.id}}" class="tag-item">
+                  {{tag.name}} <span class="badge bg-secondary">{{tag.post_count || 0}}</span>
+                </a>
+                {{/if}}
+              {{/each}}
+            {{else}}
+              <p class="text-muted">暂无标签数据</p>
+            {{/if}}
+          </div>
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&#123;&#123;if tags && tags.length&#125;&#125;
+  &#123;&#123;each tags tag&#125;&#125;
+    &lt;a href="/tag/&#123;&#123;tag.id&#125;&#125;" class="tag"&gt;
+      &#123;&#123;tag.name&#125;&#125; &lt;span&gt;&#123;&#123;tag.post_count&#125;&#125;&lt;/span&gt;
+    &lt;/a&gt;
+  &#123;&#123;/each&#125;&#125;
+&#123;&#123;else&#125;&#125;
+  &lt;p&gt;暂无标签数据&lt;/p&gt;
+&#123;&#123;/if&#125;&#125;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 单页数据 -->
+        <section id="pages" class="section">
+          <h2>7. 单页数据</h2>
+          <p>单页数据通过Page模型获取。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取所有单页
+const { items: pages, total } = await Page.getList({ page: 1, pageSize: 100 });
+
+// 获取首页显示的单页
+const homePage = await Page.getHomePageContent();</code></pre>
+          </div>
+          
+          <h5>单页列表:</h5>
+          <div class="list-group mb-4">
+            {{each pages page}}
+            <a href="/page/{{page.id}}" class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-1">{{page.title}}</h5>
+                {{if page.show_on_home}}
+                <span class="badge bg-success">首页显示</span>
+                {{/if}}
+              </div>
+            </a>
+            {{/each}}
+          </div>
+          
+          {{if homePage}}
+          <h5>首页显示的单页内容:</h5>
+          <div class="card">
+            <div class="card-header">{{homePage.title}}</div>
+            <div class="card-body">
+              <div class="content">{{homePage.content.substring(0, 200)}}...</div>
+              <a href="/page/{{homePage.id}}" class="btn btn-sm btn-primary mt-3">查看完整内容</a>
+            </div>
+          </div>
+          {{/if}}
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&#123;&#123;if homePage&#125;&#125;
+  &lt;h1&gt;&#123;&#123;homePage.title&#125;&#125;&lt;/h1&gt;
+  &lt;div class="content"&gt;&#123;&#123;homePage.content&#125;&#125;&lt;/div&gt;
+&#123;&#123;/if&#125;&#125;</code></pre>
+          </div>
+        </section>
+        
+        <!-- 文章详情 -->
+        <section id="post-detail" class="section">
+          <h2>8. 文章详情</h2>
+          <p>文章详情通过Post模型的getById方法获取，同时可以获取文章的标签。</p>
+          
+          <div class="code-example">
+            <pre><code>// 获取文章详情
+const post = await Post.getById(id);
+
+// 获取文章的标签
+const tags = await Tag.getByPostId(post.id);</code></pre>
+          </div>
+          
+          {{if samplePost}}
+          <h5>文章详情示例:</h5>
+          <div class="card">
+            <div class="card-header">
+              <h4 class="mb-0">{{samplePost.title}}</h4>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <small class="text-muted">发布于: {{samplePost.created_at}}</small>
+                {{if samplePost.category_name}}
+                <small class="text-muted ms-3">分类: <a href="/category/{{samplePost.category_id}}">{{samplePost.category_name}}</a></small>
+                {{/if}}
+              </div>
+              
+              {{if samplePost.tags && samplePost.tags.length}}
+              <div class="mb-3">
+                <small class="text-muted">标签: </small>
+                {{each samplePost.tags tag}}
+                  {{if tag && tag.id}}
+                  <a href="/tag/{{tag.id}}" class="badge bg-light text-dark me-1">{{tag.name}}</a>
+                  {{/if}}
+                {{/each}}
+              </div>
+              {{/if}}
+              
+              <div class="content mt-4">
+                {{samplePost.content.substring(0, 300)}}...
+              </div>
+            </div>
+          </div>
+          {{/if}}
+          
+          <h5>页面上调用示例:</h5>
+          <div class="code-example">
+            <pre><code>&lt;article&gt;
+  &lt;h1&gt;&#123;&#123;post.title&#125;&#125;&lt;/h1&gt;
+  &lt;div class="meta"&gt;
+    &lt;span&gt;发布于: &#123;&#123;post.created_at&#125;&#125;&lt;/span&gt;
+    &lt;span&gt;分类: &lt;a href="/category/&#123;&#123;post.category_id&#125;&#125;"&gt;&#123;&#123;post.category_name&#125;&#125;&lt;/a&gt;&lt;/span&gt;
+  &lt;/div&gt;
+  
+  &lt;div class="tags"&gt;
+    &#123;&#123;each post.tags tag&#125;&#125;
+    &lt;a href="/tag/&#123;&#123;tag.id&#125;&#125;"&gt;&#123;&#123;tag.name&#125;&#125;&lt;/a&gt;
+    &#123;&#123;/each&#125;&#125;
+  &lt;/div&gt;
+  
+  &lt;div class="content"&gt;
+    &#123;&#123;post.content&#125;&#125;
+  &lt;/div&gt;
+&lt;/article&gt;</code></pre>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-dark text-white py-4 mt-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <h4>{{settings.site_title}}</h4>
+          <p>{{settings.site_description}}</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p>{{settings.site_copyright || '版权所有 © ' + new Date().getFullYear()}}</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 平滑滚动到锚点
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 20,
+            behavior: 'smooth'
+          });
+          
+          // 更新导航状态
+          document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+          });
+          this.classList.add('active');
+        }
+      });
+    });
+    
+    // 监听滚动，高亮当前导航项
+    window.addEventListener('scroll', function() {
+      const sections = document.querySelectorAll('section');
+      let currentSection = '';
+      
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        const sectionHeight = section.offsetHeight;
+        
+        if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
+          currentSection = '#' + section.getAttribute('id');
+        }
+      });
+      
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === currentSection) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

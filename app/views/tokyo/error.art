@@ -1,0 +1,14 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="ui negative message">
+  <div class="header">错误</div>
+  <p>{{message || '发生未知错误'}}</p>
+</div>
+
+<div class="ui section divider"></div>
+
+<a href="/" class="ui basic button">
+  <i class="home icon"></i> 返回首页
+</a>
+{{/block}} 

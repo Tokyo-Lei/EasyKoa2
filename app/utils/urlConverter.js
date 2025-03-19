@@ -9,9 +9,18 @@ function titleToUrl(title) {
   if (!title) return '';
 
   try {
+    // 检查pinyin是否为函数
+    if (typeof pinyin !== 'function') {
+      console.error('Pinyin is not a function, using simple fallback');
+      // 使用简单的回退处理
+      return title.toLowerCase()
+                  .replace(/\s+/g, '-')
+                  .replace(/[^\w\-]/g, '') || 'post';
+    }
+
     // 将标题转换为拼音数组
     const pinyinArray = pinyin(title, {
-      style: pinyin.STYLE_NORMAL, // 普通风格，不带声调
+      style: pinyin.STYLE_NORMAL || 0, // 普通风格，不带声调
       heteronym: false // 不启用多音字
     });
 
@@ -26,7 +35,9 @@ function titleToUrl(title) {
   } catch (error) {
     console.error('拼音转换出错:', error);
     // 出错时返回安全的默认值
-    return 'post';
+    return title.toLowerCase()
+               .replace(/\s+/g, '-')
+               .replace(/[^\w\-]/g, '') || 'post';
   }
 }
 

@@ -1,0 +1,107 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">{{page ? '编辑单页' : '新建单页'}}</h3>
+        </div>
+        <div class="card-body">
+          <form id="pageForm">
+            <input type="hidden" name="id" value="{{page ? page.id : ''}}">
+            
+            <div class="form-group">
+              <label for="title">标题</label>
+              <input type="text" class="form-control" id="title" name="title" 
+                     value="{{page ? page.title : ''}}" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="slug">页面别名</label>
+              <input type="text" class="form-control" id="slug" name="slug" 
+                     value="{{page ? page.slug : ''}}" required>
+              <small class="form-text text-muted">用于URL，只能包含字母、数字、连字符和下划线</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="content">内容</label>
+              <textarea class="form-control" id="content" name="content" rows="10" required>{{page ? page.content : ''}}</textarea>
+              <small class="form-text text-muted">支持Markdown格式</small>
+            </div>
+            
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="showOnHome" name="showOnHome" 
+                       {{page && page.show_on_home ? 'checked' : ''}}>
+                <label class="custom-control-label" for="showOnHome">在首页显示</label>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary">
+                <i class="fa fa-save"></i> 保存
+              </button>
+              <a href="/admin/pages" class="btn btn-secondary">
+                <i class="fa fa-times"></i> 取消
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{/block}}
+
+{{block 'script'}}
+<script>
+$(document).ready(function() {
+  // 表单提交
+  $('#pageForm').submit(function(e) {
+    e.preventDefault();
+    
+    const formData = {
+      title: $('#title').val(),
+      slug: $('#slug').val(),
+      content: $('#content').val(),
+      showOnHome: $('#showOnHome').is(':checked')
+    };
+    
+    if ($('input[name="id"]').val()) {
+      formData.id = $('input[name="id"]').val();
+    }
+    
+    $.ajax({
+      url: '/admin/page/save',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(formData),
+      success: function(response) {
+        if (response.success) {
+          location.href = '/admin/pages';
+        } else {
+          alert('保存失败：' + (response.error || '未知错误'));
+        }
+      },
+      error: function(xhr) {
+        alert('保存失败：' + (xhr.responseJSON?.error || '服务器错误'));
+      }
+    });
+  });
+  
+  // 自动生成别名
+  $('#title').on('input', function() {
+    if (!$('#slug').val()) {
+      const title = $(this).val();
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+      $('#slug').val(slug);
+    }
+  });
+});
+</script>
+{{/block}} 

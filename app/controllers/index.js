@@ -5,63 +5,89 @@ const { markdownToHtml, getExcerpt } = require('../utils/markdown');
 const Navigation = require('../models/navigation');
 const Setting = require('../models/setting');
 const { buildArticleUrl } = require('../utils/urlConverter');
+const Page = require('../models/page');
 
 // 首页
 async function home(ctx) {
-  const page = parseInt(ctx.query.page) || 1;
-  
-  // 获取设置的每页文章数量
-  let pageSize = config.blog.pageSize; // 默认值
-  const articlesPerPage = await Setting.getValue('articles_per_page');
-  if (articlesPerPage) {
-    pageSize = parseInt(articlesPerPage, 10);
-  }
-  
-  const { items: posts, total, totalPages } = await Post.getList({ 
-    page, 
-    pageSize
-  });
-  
-  // 处理文章摘要和URL
-  posts.forEach(post => {
-    post.excerpt = getExcerpt(post.content, 200);
-    post.articleUrl = buildArticleUrl(post.title, post.id);
-  });
-  
-  // 获取分类树
-  const categoryTree = await Category.getCategoryTree();
-  
-  // 获取标签列表
-  const tags = await Post.getAllTags();
+  try {
+    // 获取页码
+    const page = parseInt(ctx.query.page) || 1;
     
-  // 获取导航数据
-  const navigations = await Navigation.getAll();
-  
-  // 生成页码数组
-  const pageNumbers = [];
-  let start = Math.max(1, page - 2);
-  let end = Math.min(totalPages, start + 4);
-  start = Math.max(1, end - 4);
-  
-  for (let i = start; i <= end; i++) {
-    pageNumbers.push(i);
-  }
+    // 获取设置的每页文章数量
+    let pageSize = config.blog.pageSize; // 默认值
+    const articlesPerPage = await Setting.getValue('articles_per_page');
+    if (articlesPerPage) {
+      pageSize = parseInt(articlesPerPage, 10);
+    }
+    
+    // 获取首页显示的单页内容
+    let homePages = await Page.getHomePages();
+    
+    // 处理单页内容，转换Markdown为HTML
+    if (homePages && homePages.length > 0) {
+      homePages = homePages.map(page => {
+        if (page.content) {
+          page.content = markdownToHtml(page.content);
+        }
+        return page;
+      });
+    }
+    
+    // 获取文章列表
+    const { items: posts, total, totalPages } = await Post.getList({ 
+      page, 
+      pageSize
+    });
+    
+    // 处理文章摘要和URL
+    posts.forEach(post => {
+      post.excerpt = getExcerpt(post.content, 200);
+      post.articleUrl = buildArticleUrl(post.title, post.id);
+    });
+    
+    // 获取分类树
+    const categoryTree = await Category.getCategoryTree();
+    
+    // 获取标签列表
+    const tags = await Post.getAllTags();
+    
+    // 获取导航数据
+    const navigations = await Navigation.getAll();
+    
+    // 生成页码数组
+    const pageNumbers = [];
+    let start = Math.max(1, page - 2);
+    let end = Math.min(totalPages, start + 4);
+    start = Math.max(1, end - 4);
+    
+    for (let i = start; i <= end; i++) {
+      pageNumbers.push(i);
+    }
 
-  await ctx.render('index', {
-    title: config.blog.title,
-    description: config.blog.description,
-    posts,
-    pagination: {
-      current: page,
-      total: totalPages,
-      pageNumbers,
+    await ctx.render(`${ctx.FRONTEND_DIR}/index`, {
+      title: config.blog.title,
+      description: config.blog.description,
+      homePages, // 添加转换后的单页内容
+      posts,
+      pagination: {
+        current: page,
+        total: totalPages,
+        pageNumbers,
+        navigations: navigations
+      },
+      categoryTree,
+      tags,
+      currentPath: ctx.path,
       navigations: navigations
-    },
-    categoryTree,
-    tags,
-    currentPath: ctx.path,
-    navigations: navigations
-  });
+    });
+  } catch (error) {
+    console.error('首页渲染失败:', error);
+    ctx.status = 500;
+    await ctx.render(`${ctx.FRONTEND_DIR}/error`, {
+      message: '服务器错误',
+      error: { status: 500, stack: error.stack }
+    });
+  }
 }
 
 // 文章详情
@@ -85,7 +111,7 @@ async function postDetail(ctx) {
     if (!post) {
       console.log(`404错误: 文章 ${id} 不存在`);
       ctx.status = 404;
-      return await ctx.render('error', {
+      return await ctx.render(`${ctx.FRONTEND_DIR}/error`, {
         message: `文章不存在 (ID: ${id})`,
         currentPath: ctx.path
       });
@@ -109,7 +135,7 @@ async function postDetail(ctx) {
     // 生成文章URL - 用于分享或其他引用
     post.articleUrl = buildArticleUrl(post.title, post.id);
     
-    await ctx.render('post', {
+    await ctx.render(`${ctx.FRONTEND_DIR}/post`, {
       title: `${post.title} - ${config.blog.title}`,
       post,
       categoryTree,
@@ -121,7 +147,7 @@ async function postDetail(ctx) {
   } catch (err) {
     console.error(`获取文章出错 (ID: ${id}):`, err);
     ctx.status = 500;
-    return await ctx.render('error', {
+    return await ctx.render(`${ctx.FRONTEND_DIR}/error`, {
       message: `获取文章时发生错误: ${err.message}`,
       currentPath: ctx.path
     });
@@ -145,7 +171,7 @@ async function categoryPage(ctx) {
   
   if (!category) {
     ctx.status = 404;
-    return await ctx.render('error', {
+    return await ctx.render(`${ctx.FRONTEND_DIR}/error`, {
       message: '分类不存在',
       currentPath: ctx.path
     });
@@ -183,7 +209,7 @@ async function categoryPage(ctx) {
     pageNumbers.push(i);
   }
   
-  await ctx.render('category', {
+  await ctx.render(`${ctx.FRONTEND_DIR}/category`, {
     title: `${category.name} - ${config.blog.title}`,
     category,
     posts,
@@ -243,7 +269,7 @@ async function tagPage(ctx) {
     pageNumbers.push(i);
   }
   
-  await ctx.render('tag', {
+  await ctx.render(`${ctx.FRONTEND_DIR}/tag`, {
     title: `标签: ${tagName} - ${config.blog.title}`,
     tagName,
     posts,
@@ -325,7 +351,7 @@ async function articleList(ctx) {
     console.log(`生成页码数组: [${pageNumbers.join(', ')}]`);
     
     console.log('开始渲染文章列表页...');
-    await ctx.render('article', {
+    await ctx.render(`${ctx.FRONTEND_DIR}/article`, {
       title: '文章列表',
       posts,
       pagination: {
@@ -343,7 +369,7 @@ async function articleList(ctx) {
     console.error('加载文章列表失败, 详细错误信息:', error);
     console.error('错误堆栈:', error.stack);
     ctx.status = 500;
-    await ctx.render('error', {
+    await ctx.render(`${ctx.FRONTEND_DIR}/error`, {
       message: '加载文章列表失败',
       error: { status: 500, stack: error.stack }
     });

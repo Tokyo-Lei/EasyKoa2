@@ -43,6 +43,9 @@
             <li class="nav-item">
               <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">用户信息</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" id="database-tab" data-bs-toggle="tab" href="#database" role="tab" aria-controls="database" aria-selected="false">数据库管理</a>
+            </li>
           </ul>
           
           <!-- 选项卡内容 -->
@@ -336,8 +339,116 @@
                 </div>
               </div>
             </div>
+            
+            <!-- 数据库管理选项卡 -->
+            <div class="tab-pane fade" id="database" role="tabpanel" aria-labelledby="database-tab">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-title mb-0">SQLite数据库管理</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">数据库优化</h5>
+                          <p class="card-text">优化数据库结构，清理未使用的空间。</p>
+                          <button type="button" class="btn btn-primary" id="optimizeDatabase">
+                            <i class="fa fa-magic"></i> 优化数据库
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">数据库备份</h5>
+                          <p class="card-text">创建数据库文件的备份。</p>
+                          <button type="button" class="btn btn-success" id="backupDatabase">
+                            <i class="fa fa-download"></i> 立即备份
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="row mt-4">
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">数据恢复</h5>
+                          <p class="card-text">从备份文件恢复数据库。</p>
+                          <div class="mb-3">
+                            <label for="restoreFile" class="form-label">选择备份文件</label>
+                            <input type="file" class="form-control" id="restoreFile" name="backup" accept=".db">
+                            <div class="form-text">选择.db格式的SQLite数据库备份文件</div>
+                          </div>
+                          <button type="button" class="btn btn-warning" id="restoreDatabase">
+                            <i class="fa fa-upload"></i> 恢复数据
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">定时备份设置</h5>
+                          <p class="card-text">配置自动备份计划。</p>
+                          
+                          <div class="mb-3">
+                            <div class="form-check form-switch">
+                              <input type="checkbox" class="form-check-input" id="enableAutoBackup" 
+                                     name="enable_auto_backup" {{settings.enable_auto_backup ? 'checked' : ''}}>
+                              <label class="form-check-label" for="enableAutoBackup">启用定时备份</label>
+                            </div>
+                          </div>
+                          
+                          <div class="mb-3">
+                            <label for="backupInterval" class="form-label">备份间隔（小时）</label>
+                            <input type="number" class="form-control" id="backupInterval" name="backup_interval" 
+                                   value="{{settings.backup_interval || 24}}" min="1" max="168">
+                            <div class="form-text">设置自动备份的间隔时间（1-168小时）</div>
+                          </div>
+                          
+                          <div class="mb-3">
+                            <label for="backupRetention" class="form-label">保留备份数量</label>
+                            <input type="number" class="form-control" id="backupRetention" name="backup_retention" 
+                                   value="{{settings.backup_retention || 7}}" min="1" max="30">
+                            <div class="form-text">系统将保留最近的N个备份文件（1-30个）</div>
+                          </div>
+                          
+                          <button type="button" class="btn btn-primary" id="saveBackupSettings">
+                            保存备份设置
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 操作结果提示 -->
+<div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">操作结果</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="resultMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">确定</button>
       </div>
     </div>
   </div>
@@ -769,6 +880,247 @@
         }
       });
     });
+    
+    // 优化数据库
+    $('#optimizeDatabase').click(function() {
+      console.log('优化数据库按钮被点击');
+      if (!confirm('确定要优化数据库吗？')) return;
+      
+      // 显示加载状态
+      $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 优化中...');
+      
+      // 发送请求
+      $.ajax({
+        url: '/admin/settings/optimize-database',
+        type: 'POST',
+        success: function(response) {
+          console.log('优化数据库响应:', response);
+          if (response.success) {
+            showResult('success', '数据库优化完成');
+          } else {
+            showResult('error', response.error || '数据库优化失败');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('优化数据库错误:', xhr.responseText, status, error);
+          let errorMsg = '数据库优化失败';
+          
+          try {
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMsg = xhr.responseJSON.error;
+            } else if (xhr.responseText) {
+              const response = JSON.parse(xhr.responseText);
+              if (response.error) {
+                errorMsg = response.error;
+              }
+            }
+          } catch (e) {
+            console.error('解析错误响应失败:', e);
+          }
+          
+          showResult('error', errorMsg);
+        },
+        complete: function() {
+          // 恢复按钮状态
+          $('#optimizeDatabase').prop('disabled', false).html('<i class="fa fa-magic"></i> 优化数据库');
+        }
+      });
+    });
+    
+    // 备份数据库
+    $('#backupDatabase').click(function() {
+      console.log('备份数据库按钮被点击');
+      
+      // 显示加载状态
+      $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 备份中...');
+      
+      // 发送请求
+      $.ajax({
+        url: '/admin/settings/backup-database',
+        type: 'POST',
+        success: function(response) {
+          console.log('备份数据库响应:', response);
+          if (response.success) {
+            showResult('success', '数据库备份完成');
+          } else {
+            showResult('error', response.error || '数据库备份失败');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('备份数据库错误:', xhr.responseText, status, error);
+          let errorMsg = '数据库备份失败';
+          
+          try {
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMsg = xhr.responseJSON.error;
+            } else if (xhr.responseText) {
+              const response = JSON.parse(xhr.responseText);
+              if (response.error) {
+                errorMsg = response.error;
+              }
+            }
+          } catch (e) {
+            console.error('解析错误响应失败:', e);
+          }
+          
+          showResult('error', errorMsg);
+        },
+        complete: function() {
+          // 恢复按钮状态
+          $('#backupDatabase').prop('disabled', false).html('<i class="fa fa-download"></i> 立即备份');
+        }
+      });
+    });
+    
+    // 恢复数据库
+    $('#restoreDatabase').click(function() {
+      console.log('恢复数据库按钮被点击');
+      const fileInput = $('#restoreFile')[0];
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showResult('error', '请选择备份文件');
+        return;
+      }
+      
+      console.log('选择的文件:', file.name, file.size, file.type);
+      
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('backup', file);
+      
+      // 显示加载状态
+      $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 恢复中...');
+      
+      // 发送请求
+      $.ajax({
+        url: '/admin/settings/restore-database',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          console.log('恢复数据库响应:', response);
+          if (response.success) {
+            showResult('success', '数据库恢复完成');
+            setTimeout(function() {
+              location.reload();
+            }, 2000);
+          } else {
+            showResult('error', response.error || '数据库恢复失败');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('恢复数据库错误:', xhr.responseText, status, error);
+          let errorMsg = '数据库恢复失败';
+          
+          try {
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMsg = xhr.responseJSON.error;
+            } else if (xhr.responseText) {
+              const response = JSON.parse(xhr.responseText);
+              if (response.error) {
+                errorMsg = response.error;
+              }
+            }
+          } catch (e) {
+            console.error('解析错误响应失败:', e);
+          }
+          
+          showResult('error', errorMsg);
+        },
+        complete: function() {
+          // 恢复按钮状态
+          $('#restoreDatabase').prop('disabled', false).html('<i class="fa fa-upload"></i> 恢复数据');
+        }
+      });
+    });
+    
+    // 保存备份设置
+    $('#saveBackupSettings').click(function() {
+      console.log('保存备份设置按钮被点击');
+      const settings = {
+        enable_auto_backup: $('#enableAutoBackup').is(':checked'),
+        backup_interval: $('#backupInterval').val(),
+        backup_retention: $('#backupRetention').val()
+      };
+      
+      // 显示加载状态
+      $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...');
+      
+      // 发送请求
+      $.ajax({
+        url: '/admin/settings/save',
+        type: 'POST',
+        data: {
+          type: 'backup',
+          settings: settings
+        },
+        success: function(response) {
+          console.log('保存备份设置响应:', response);
+          if (response.success) {
+            showResult('success', '备份设置已保存');
+          } else {
+            showResult('error', response.error || '保存备份设置失败');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('保存备份设置错误:', xhr.responseText, status, error);
+          let errorMsg = '保存备份设置失败';
+          
+          try {
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMsg = xhr.responseJSON.error;
+            } else if (xhr.responseText) {
+              const response = JSON.parse(xhr.responseText);
+              if (response.error) {
+                errorMsg = response.error;
+              }
+            }
+          } catch (e) {
+            console.error('解析错误响应失败:', e);
+          }
+          
+          showResult('error', errorMsg);
+        },
+        complete: function() {
+          // 恢复按钮状态
+          $('#saveBackupSettings').prop('disabled', false).text('保存备份设置');
+        }
+      });
+    });
+    
+    // 文件选择显示
+    $('#restoreFile').change(function() {
+      const fileName = $(this).val().split('\\').pop();
+      $(this).next('.custom-file-label').html(fileName);
+    });
+    
+    // 保存设置
+    function saveSettings(type, data) {
+      $.ajax({
+        url: '/admin/settings/save',
+        method: 'POST',
+        data: {
+          type: type,
+          settings: data
+        },
+        success: function(response) {
+          if (response.success) {
+            showResult('success', '设置已保存');
+          } else {
+            showResult('error', response.error || '保存设置失败');
+          }
+        }
+      });
+    }
+    
+    // 显示操作结果
+    function showResult(type, message) {
+      console.log('显示结果:', type, message);
+      $('#resultMessage').text(message);
+      $('#resultModal').modal('show');
+    }
   });
 </script>
 {{/block}} 

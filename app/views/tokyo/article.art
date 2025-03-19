@@ -1,0 +1,72 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="article-list">
+  <h1 class="page-title">文章列表</h1>
+
+  {{if posts && posts.length > 0}}
+    {{each posts}}
+    <article class="article-item">
+      <h2 class="article-title">
+        <a href="{{$value.articleUrl}}">{{$value.title}}</a>
+      </h2>
+      
+      <div class="article-meta">
+        <span class="article-date">
+          <i class="fa fa-calendar"></i> {{$value.created_at}}
+        </span>
+        <span class="article-category">
+          <i class="fa fa-folder"></i> 
+          <a href="/category/{{$value.category_id}}">{{$value.category_name}}</a>
+        </span>
+        {{if $value.tags && $value.tags.length > 0}}
+        <span class="article-tags">
+          <i class="fa fa-tags"></i>
+          {{each $value.tags}}
+          <a href="/tag/{{$value.name}}" class="tag">{{$value.name}}</a>
+          {{/each}}
+        </span>
+        {{/if}}
+      </div>
+
+      <div class="article-excerpt">
+        {{$value.excerpt}}
+      </div>
+
+      <div class="article-footer">
+        <a href="{{$value.articleUrl}}" class="read-more">阅读全文</a>
+        <span class="article-views">
+          <i class="fa fa-eye"></i> {{$value.views}}
+        </span>
+      </div>
+    </article>
+    {{/each}}
+
+    <!-- 分页 -->
+    {{if pagination && pagination.total > 1}}
+    <div class="pagination">
+      {{if pagination.current > 1}}
+      <a href="/article?page={{pagination.current - 1}}" class="page-link">上一页</a>
+      {{/if}}
+      
+      <!-- 使用预生成的页码数组 -->
+      {{each pagination.pageNumbers}}
+        {{if $value === pagination.current}}
+        <span class="page-link active">{{$value}}</span>
+        {{else}}
+        <a href="/article?page={{$value}}" class="page-link">{{$value}}</a>
+        {{/if}}
+      {{/each}}
+      
+      {{if pagination.current < pagination.total}}
+      <a href="/article?page={{pagination.current + 1}}" class="page-link">下一页</a>
+      {{/if}}
+    </div>
+    {{/if}}
+  {{else}}
+    <div class="no-articles">
+      <p>暂无文章</p>
+    </div>
+  {{/if}}
+</div>
+{{/block}} 

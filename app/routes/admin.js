@@ -4,10 +4,10 @@ const resourcesController = require('../controllers/admin/resources');
 const navigationController = require('../controllers/admin/navigation');
 const auth = require('../middleware/auth');
 const settingController = require('../controllers/admin/setting');
+const pageController = require('../controllers/admin/page');
 
-const router = new Router({
-  prefix: '/admin'
-});
+// 不使用固定前缀，将由app.js动态设置
+const router = new Router();
 
 // 登录相关
 router.get('/login', adminController.loginPage);
@@ -62,5 +62,21 @@ router.post('/settings/upload-logo', settingController.uploadLogo);
 router.post('/settings/upload-avatar', settingController.uploadAvatar);
 router.post('/settings/update-username', settingController.updateUsername);
 router.post('/settings/update-password', settingController.updatePassword);
+// 数据库管理路由
+router.post('/settings/optimize-database', settingController.optimizeDatabase);
+router.post('/settings/backup-database', settingController.backupDatabase);
+router.post('/settings/restore-database', settingController.restoreDatabase);
+router.post('/settings/save', settingController.saveBackupSettings);
+
+// 单页管理
+router.get('/pages', pageController.pageList);
+router.get('/page/new', pageController.editPage);
+router.get('/page/:id', pageController.editPage);
+router.post('/page/save', pageController.savePage);
+router.post('/page/save/:id', pageController.savePage);
+router.delete('/page/:id', pageController.deletePage);
+router.post('/page/delete/:id', pageController.deletePage);
+router.get('/page/check-home', pageController.checkHomePageStatus);
+router.post('/page/toggle-home/:id', pageController.toggleHomePageStatus);
 
 module.exports = router; 

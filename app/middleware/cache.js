@@ -33,6 +33,7 @@ module.exports = async (ctx, next) => {
 
     // 缓存持续时间（分钟）
     const duration = parseInt(cacheDuration, 10) || 60;
+    console.log(`缓存持续时间: ${duration}分钟`);
     
     // 检查当前路径是否在排除列表中
     const excludeList = cacheExclude ? cacheExclude.split('\n').map(item => item.trim()) : [];
@@ -52,8 +53,10 @@ module.exports = async (ctx, next) => {
       return;
     }
 
-    // 生成缓存键
-    const cacheKey = generateCacheKey(ctx);
+    // 生成缓存键，考虑前端目录设置
+    const frontendDir = ctx.FRONTEND_DIR || 'tokyo'; // 使用全局设置的前端目录
+    const cacheKey = generateCacheKey(ctx, frontendDir);
+    console.log(`生成缓存键: ${cacheKey} (目录: ${frontendDir})`);
     
     // 缓存目录设置
     const cacheDir = path.join(__dirname, '../../data/cache');
@@ -62,6 +65,7 @@ module.exports = async (ctx, next) => {
     }
     
     const cacheFile = path.join(cacheDir, `${cacheKey}.html`);
+    console.log(`缓存文件路径: ${cacheFile}`);
     
     // 检查缓存文件是否存在且未过期
     if (fs.existsSync(cacheFile)) {
@@ -73,35 +77,46 @@ module.exports = async (ctx, next) => {
       const clearTime = cacheLastCleared ? parseInt(cacheLastCleared, 10) : 0;
       const cacheAge = (now - fileTime) / 1000 / 60; // 缓存年龄（分钟）
       
+      console.log(`缓存存在，年龄: ${cacheAge.toFixed(2)}分钟, 最大允许: ${duration}分钟`);
+      console.log(`缓存创建时间: ${new Date(fileTime).toLocaleString()}, 最后清除时间: ${clearTime ? new Date(clearTime).toLocaleString() : '从未'}`);
+      
       // 如果缓存未过期且未被手动清除，则使用缓存
       if (cacheAge < duration && fileTime > clearTime) {
         console.log(`从缓存中获取 ${ctx.path}`);
-        const cachedContent = fs.readFileSync(cacheFile, 'utf8');
-        const cachedData = JSON.parse(cachedContent);
-        
-        // 设置响应头和内容
-        Object.keys(cachedData.headers).forEach(key => {
-          ctx.set(key, cachedData.headers[key]);
-        });
-        
-        ctx.status = cachedData.status;
-        ctx.body = cachedData.body;
-        
-        // 添加调试信息（仅当DEBUG环境变量为true时）
-        const showDebugInfo = process.env.DEBUG === 'true';
-        if (showDebugInfo) {
-          // 为页面添加缓存信息
-          ctx.state = ctx.state || {};
-          ctx.state.cacheInfo = {
-            fromCache: true,
-            cachedTime: new Date(fileTime).toLocaleString(),
-            age: Math.round(cacheAge * 10) / 10
-          };
+        try {
+          const cachedContent = fs.readFileSync(cacheFile, 'utf8');
+          const cachedData = JSON.parse(cachedContent);
+          
+          // 设置响应头和内容
+          Object.keys(cachedData.headers).forEach(key => {
+            ctx.set(key, cachedData.headers[key]);
+          });
+          
+          ctx.status = cachedData.status;
+          ctx.body = cachedData.body;
+          
+          // 添加调试信息（仅当DEBUG环境变量为true时）
+          const showDebugInfo = process.env.DEBUG === 'true';
+          if (showDebugInfo) {
+            // 为页面添加缓存信息
+            ctx.state = ctx.state || {};
+            ctx.state.cacheInfo = {
+              fromCache: true,
+              cachedTime: new Date(fileTime).toLocaleString(),
+              age: Math.round(cacheAge * 10) / 10
+            };
+          }
+          
+          // 标记响应已从缓存提供
+          responseServedFromCache = true;
+          console.log('成功从缓存提供响应');
+        } catch (err) {
+          console.error('读取缓存失败:', err);
+          // 如果读取缓存失败，继续正常处理请求
+          responseServedFromCache = false;
         }
-        
-        // 标记响应已从缓存提供
-        responseServedFromCache = true;
       } else {
+        console.log('缓存已过期，将被删除');
         // 如果缓存已过期，删除它
         try {
           fs.unlinkSync(cacheFile);
@@ -109,14 +124,19 @@ module.exports = async (ctx, next) => {
           console.error('删除过期缓存失败:', err);
         }
       }
+    } else {
+      console.log(`缓存文件不存在: ${cacheFile}`);
     }
     
     // 如果没有从缓存提供响应，则继续处理请求
     if (!responseServedFromCache) {
+      console.log('继续处理请求...');
       await next();
       
       // 只缓存成功的HTML响应
       if (ctx.status === 200 && ctx.response.type && ctx.response.type.includes('html')) {
+        console.log(`符合缓存条件: ${ctx.path}, 状态码: ${ctx.status}, 内容类型: ${ctx.response.type}`);
+        
         // 添加调试信息（仅当DEBUG环境变量为true时）
         const showDebugInfo = process.env.DEBUG === 'true';
         if (showDebugInfo) {
@@ -141,6 +161,8 @@ module.exports = async (ctx, next) => {
         } catch (err) {
           console.error('创建缓存失败:', err);
         }
+      } else {
+        console.log(`不符合缓存条件: ${ctx.path}, 状态码: ${ctx.status}, 内容类型: ${ctx.response.type || '未知'}`);
       }
     }
   } catch (error) {
@@ -153,11 +175,13 @@ module.exports = async (ctx, next) => {
 /**
  * 生成缓存键
  * @param {Object} ctx Koa上下文
+ * @param {string} frontendDir 前端目录名称
  * @returns {string} 缓存键
  */
-function generateCacheKey(ctx) {
+function generateCacheKey(ctx, frontendDir) {
   const { method, path, query } = ctx;
+  // 将前端目录名称也加入缓存键的计算，以便区分不同模板目录
   const queryString = Object.keys(query).sort().map(key => `${key}=${query[key]}`).join('&');
-  const data = `${method}:${path}?${queryString}`;
+  const data = `${method}:${path}?${queryString}:dir=${frontendDir}`;
   return crypto.createHash('md5').update(data).digest('hex');
 } 

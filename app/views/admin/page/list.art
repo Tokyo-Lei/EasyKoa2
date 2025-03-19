@@ -1,0 +1,190 @@
+{{extend './layout.art'}}
+
+{{block 'content'}}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h3 class="card-title m-0">单页管理</h3>
+          <div>
+            <a href="/admin/page/new" class="btn btn-primary">
+              <i class="fa fa-plus mr-1"></i> 新建单页
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- 添加错误提示区域 -->
+          <div id="actionAlert" class="alert mb-3" style="display: none;"></div>
+          
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>别名</th>
+                <th>浏览量</th>
+                <th>创建时间</th>
+                <th>首页显示</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{each pages}}
+              <tr>
+                <td>{{$value.id}}</td>
+                <td>{{$value.title}}</td>
+                <td>{{$value.slug}}</td>
+                <td>{{$value.views}}</td>
+                <td>{{$value.created_at}}</td>
+                <td>
+                  {{if $value.show_on_home}}
+                  <span class="badge bg-success">是</span>
+                  {{else}}
+                  <span class="badge bg-secondary">否</span>
+                  {{/if}}
+                </td>
+                <td>
+                  <a href="/admin/page/{{$value.id}}" class="btn btn-info btn-sm">
+                编辑
+                  </a>
+                  <button class="btn btn-danger btn-sm delete-page" data-id="{{$value.id}}">
+                 删除
+                  </button>
+                  <button type="button" class="btn btn-sm {{$value.show_on_home ? 'btn-warning' : 'btn-success'}} toggle-home" data-id="{{$value.id}}" data-status="{{$value.show_on_home ? '1' : '0'}}">
+                    {{$value.show_on_home ? '取消首页显示' : '设为首页显示'}}
+                  </button>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+          
+          {{if pagination && pagination.total > 1}}
+          <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+              {{if pagination.current > 1}}
+              <li class="page-item">
+                <a class="page-link" href="?page={{pagination.current - 1}}">上一页</a>
+              </li>
+              {{/if}}
+              
+              {{each pagination.pageNumbers}}
+              <li class="page-item {{$value == pagination.current ? 'active' : ''}}">
+                <a class="page-link" href="?page={{$value}}">{{$value}}</a>
+              </li>
+              {{/each}}
+              
+              {{if pagination.current < pagination.total}}
+              <li class="page-item">
+                <a class="page-link" href="?page={{pagination.current + 1}}">下一页</a>
+              </li>
+              {{/if}}
+            </ul>
+          </nav>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{/block}}
+
+{{block 'scripts'}}
+<script>
+$(document).ready(function() {
+  // 显示错误或成功消息
+  function showAlert(message, isError = false) {
+    const alertEl = $('#actionAlert');
+    alertEl.removeClass('alert-success alert-danger')
+      .addClass(isError ? 'alert-danger' : 'alert-success')
+      .text(message)
+      .show();
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+      alertEl.fadeOut();
+    }, 5000);
+  }
+  
+  // 删除单页
+  $('.delete-page').click(function() {
+    const id = $(this).data('id');
+    if (confirm('确定要删除这个单页吗？')) {
+      $.ajax({
+        url: '/admin/page/' + id,
+        method: 'DELETE',
+        success: function(response) {
+          if (response.success) {
+            location.reload();
+          } else {
+            showAlert('删除失败：' + response.message, true);
+          }
+        },
+        error: function() {
+          showAlert('删除失败，请重试', true);
+        }
+      });
+    }
+  });
+  
+  // 切换首页显示状态
+  $('.toggle-home').click(function() {
+    const btn = $(this);
+    const id = btn.data('id');
+    const currentStatus = btn.data('status');
+    
+    // 如果当前状态是非显示，并准备设置为显示，需先检查是否有其他页面已设置为显示
+    if (currentStatus === '0') {
+      $.ajax({
+        url: '/admin/page/check-home',
+        method: 'GET',
+        success: function(response) {
+          if (response.exists && response.pageId !== id) {
+            showAlert('有其他页面勾选了首页显示，先取消后再选择', true);
+          } else {
+            toggleHomeStatus(id, btn);
+          }
+        },
+        error: function() {
+          showAlert('检查失败，请重试', true);
+        }
+      });
+    } else {
+      // 如果当前状态是显示，则直接切换为不显示
+      toggleHomeStatus(id, btn);
+    }
+  });
+  
+  // 执行状态切换的函数
+  function toggleHomeStatus(id, btn) {
+    $.ajax({
+      url: '/admin/page/toggle-home/' + id,
+      method: 'POST',
+      success: function(response) {
+        if (response.success) {
+          showAlert(response.message);
+          setTimeout(() => {
+            location.reload();
+          }, 1000);
+        } else {
+          showAlert('切换失败：' + response.message, true);
+        }
+      },
+      error: function(xhr) {
+        let errorMessage = '操作失败，请重试';
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response && response.message) {
+            errorMessage = response.message;
+          }
+        } catch (e) {}
+        
+        showAlert(errorMessage, true);
+      }
+    });
+  }
+});
+</script>
+{{/block}} 

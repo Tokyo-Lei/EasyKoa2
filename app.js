@@ -11,6 +11,10 @@ const render = require('koa-art-template');
 const session = require('koa-session');
 const fs = require('fs'); // 确保fs模块在上下文中可用
 
+// 获取环境变量配置
+const FRONTEND_DIR = process.env.FRONTEND_DIR || 'tokyo';
+const ADMIN_PATH = process.env.ADMIN_PATH || 'admin';
+
 // 引入路由和模型
 const indexRouter = require('./app/routes/index');
 const apiRouter = require('./app/routes/api');
@@ -48,6 +52,10 @@ render(app, {
   }
 });
 
+// 添加全局变量，供路由使用
+app.context.FRONTEND_DIR = FRONTEND_DIR;
+app.context.ADMIN_PATH = ADMIN_PATH;
+
 // 中间件
 app.use(logger());
 app.use(koaBody({
@@ -73,7 +81,7 @@ app.use(static(staticDir));
 
 // 添加额外的静态资源映射，用于处理前端代码中的路径问题
 app.use(async (ctx, next) => {
-  // 处理/admin/前缀的资源请求
+  // 处理/admin/及其子目录的资源请求
   if (ctx.path.startsWith('/admin/') && !ctx.path.includes('.html')) {
     // 检查是否是静态资源请求(css, js, images, fonts等)
     const isStaticRequest = /\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/i.test(ctx.path);
@@ -81,23 +89,49 @@ app.use(async (ctx, next) => {
     if (isStaticRequest) {
       // 尝试从public目录中提供文件
       const filePath = path.join(staticDir, ctx.path);
-      const alternativePath = path.join(staticDir, ctx.path.replace('/admin/', '/'));
+      
+      // 处理几种可能的替代路径
+      // 1. 直接从admin前缀中移除
+      const alternativePath1 = path.join(staticDir, ctx.path.replace('/admin/', '/'));
+      
+      // 2. 从子目录路径中移除子目录部分 (例如 /admin/page/xxx.jpg -> /xxx.jpg)
+      const pathParts = ctx.path.split('/');
+      const fileName = pathParts[pathParts.length - 1];
+      const alternativePath2 = path.join(staticDir, fileName);
+      
+      // 3. 检查是否是上传目录的内容
+      const uploadPath = path.join(staticDir, '/uploads/', fileName);
       
       console.log('尝试访问静态资源:', ctx.path);
-      console.log('映射到文件路径:', filePath);
-      console.log('替代文件路径:', alternativePath);
+      console.log('映射到原始文件路径:', filePath);
+      console.log('替代路径1:', alternativePath1);
+      console.log('替代路径2:', alternativePath2);
+      console.log('上传目录路径:', uploadPath);
       
+      // 按优先级尝试访问不同路径
       if (fs.existsSync(filePath)) {
-        // 如果文件存在于请求的路径
+        // 如果文件存在于请求的原始路径
         console.log('文件存在于原始路径');
         ctx.type = path.extname(filePath);
         ctx.body = fs.createReadStream(filePath);
         return;
-      } else if (fs.existsSync(alternativePath)) {
-        // 如果文件存在于替代路径
-        console.log('文件存在于替代路径');
-        ctx.type = path.extname(alternativePath);
-        ctx.body = fs.createReadStream(alternativePath);
+      } else if (fs.existsSync(alternativePath1)) {
+        // 如果文件存在于替代路径1
+        console.log('文件存在于替代路径1');
+        ctx.type = path.extname(alternativePath1);
+        ctx.body = fs.createReadStream(alternativePath1);
+        return;
+      } else if (fs.existsSync(alternativePath2)) {
+        // 如果文件是直接从根目录访问
+        console.log('文件存在于替代路径2');
+        ctx.type = path.extname(alternativePath2);
+        ctx.body = fs.createReadStream(alternativePath2);
+        return;
+      } else if (fs.existsSync(uploadPath)) {
+        // 如果文件位于上传目录
+        console.log('文件存在于上传目录');
+        ctx.type = path.extname(uploadPath);
+        ctx.body = fs.createReadStream(uploadPath);
         return;
       }
     }
@@ -106,14 +140,107 @@ app.use(async (ctx, next) => {
   await next();
 });
 
-// 添加专门的上传文件静态访问调试中间件
+// 直接处理/uploads/目录下的文件请求，简化图片访问
 app.use(async (ctx, next) => {
-  if (ctx.path.startsWith('/uploads/')) {
-    console.log('请求上传文件:', ctx.path);
-    const filePath = path.join(staticDir, ctx.path);
-    console.log('对应的文件路径:', filePath);
-    console.log('文件是否存在:', fs.existsSync(filePath));
+  if (ctx.path.startsWith('/uploads/') && !ctx.path.includes('..')) {
+    // 提取文件名
+    const fileName = path.basename(ctx.path);
+    console.log('尝试直接访问上传文件:', fileName);
+    
+    // 先检查主上传目录
+    const mainUploadPath = path.join(staticDir, 'uploads', fileName);
+    if (fs.existsSync(mainUploadPath)) {
+      console.log('文件存在于主上传目录');
+      ctx.type = path.extname(mainUploadPath);
+      ctx.body = fs.createReadStream(mainUploadPath);
+      return;
+    }
+    
+    // 再检查临时上传目录
+    const tempUploadPath = path.join(staticDir, 'uploads/temp', fileName);
+    if (fs.existsSync(tempUploadPath)) {
+      console.log('文件存在于临时上传目录');
+      ctx.type = path.extname(tempUploadPath);
+      ctx.body = fs.createReadStream(tempUploadPath);
+      return;
+    }
+    
+    // 最后检查完整路径
+    const fullPath = path.join(staticDir, ctx.path);
+    if (fs.existsSync(fullPath)) {
+      console.log('文件存在于完整路径:', fullPath);
+      ctx.type = path.extname(fullPath);
+      ctx.body = fs.createReadStream(fullPath);
+      return;
+    }
+    
+    console.log('找不到文件:', fileName);
   }
+  
+  await next();
+});
+
+// 特殊处理子目录中对uploads资源的引用
+app.use(async (ctx, next) => {
+  // 检查是否是来自admin子目录对上传资源的请求
+  if (ctx.path.includes('/uploads/')) {
+    console.log('检测到对上传资源的请求:', ctx.path);
+
+    // 从路径中提取文件名
+    const pathParts = ctx.path.split('/');
+    const fileName = pathParts[pathParts.length - 1];
+    
+    // 构建可能的文件路径
+    const originalPath = path.join(staticDir, ctx.path);
+    const uploadDirPath = path.join(staticDir, 'uploads', fileName);
+    
+    console.log('原始资源路径:', originalPath);
+    console.log('简化上传路径:', uploadDirPath);
+    
+    if (!fs.existsSync(originalPath) && fs.existsSync(uploadDirPath)) {
+      console.log('使用简化上传路径提供文件');
+      ctx.type = path.extname(uploadDirPath);
+      ctx.body = fs.createReadStream(uploadDirPath);
+      return;
+    }
+  }
+  
+  // 处理可能错误解析的图片路径（例如 /admin/page/uploads/...）
+  if (ctx.path.includes('/page/uploads/') || ctx.path.includes('/admin/page/uploads/')) {
+    // 尝试从错误的路径中提取正确的资源路径
+    let correctPath;
+    if (ctx.path.includes('/page/uploads/')) {
+      correctPath = ctx.path.substring(ctx.path.indexOf('/page/uploads/') + 6); // 移除 /page 前缀
+    } else if (ctx.path.includes('/admin/page/uploads/')) {
+      correctPath = ctx.path.substring(ctx.path.indexOf('/admin/page/uploads/') + 11); // 移除 /admin/page 前缀
+    }
+    
+    console.log('检测到可能的子目录资源路径错误:', ctx.path);
+    console.log('尝试修正为:', correctPath);
+    
+    if (correctPath) {
+      const correctedFilePath = path.join(staticDir, correctPath);
+      
+      if (fs.existsSync(correctedFilePath)) {
+        console.log('使用修正后的路径提供文件:', correctedFilePath);
+        ctx.type = path.extname(correctedFilePath);
+        ctx.body = fs.createReadStream(correctedFilePath);
+        return;
+      }
+      
+      // 进一步尝试只使用文件名
+      const fileName = path.basename(correctPath);
+      const uploadDirPath = path.join(staticDir, 'uploads', fileName);
+      
+      if (fs.existsSync(uploadDirPath)) {
+        console.log('使用文件名匹配提供文件:', uploadDirPath);
+        ctx.type = path.extname(uploadDirPath);
+        ctx.body = fs.createReadStream(uploadDirPath);
+        return;
+      }
+    }
+  }
+  
   await next();
 });
 
@@ -183,7 +310,12 @@ app.use(htmlExtensionMiddleware());
 // 直接使用各个路由
 app.use(indexRouter.routes()).use(indexRouter.allowedMethods());
 app.use(apiRouter.routes()).use(apiRouter.allowedMethods());
-app.use(adminRouter.routes()).use(adminRouter.allowedMethods());
+
+// 修改admin路由前缀为环境变量配置的路径
+const adminRoutes = adminRouter.routes();
+const adminMethods = adminRouter.allowedMethods();
+router.use(`/${ADMIN_PATH}`, adminRoutes, adminMethods);
+app.use(router.routes()).use(router.allowedMethods());
 
 // 错误处理
 app.on('error', (err, ctx) => {
