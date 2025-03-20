@@ -2,6 +2,8 @@
 
 一个基于 Koa2 的轻量级博客系统，使用 SQLite 作为数据库，结合 art-template 模板引擎提供灵活的前端展示。系统支持文章管理、分类管理、标签管理、单页管理等功能，适合个人或小型团队快速搭建博客网站。
 
+演示: www.tokyos.cn
+
 ## 功能特点
 
 - **轻量级架构**：基于 Koa2 构建，资源占用低，启动迅速
@@ -182,4 +184,4 @@ web5/
 如有任何问题或建议，请通过以下方式联系：
 
 - 项目问题跟踪：[GitHub Issues](https://github.com/yourusername/web5/issues)
-- 邮箱：your.email@example.com
+- 邮箱：kyomini@qq.com
